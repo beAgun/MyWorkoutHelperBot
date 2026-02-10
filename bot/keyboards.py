@@ -1,0 +1,68 @@
+from aiogram.types import (
+    ReplyKeyboardMarkup, 
+    KeyboardButton, 
+    InlineKeyboardButton, 
+    InlineKeyboardMarkup
+)
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from bot.constants import *
+from bot.callbacks_types import *
+
+start = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text='/start')]
+], resize_keyboard=True)
+
+
+main = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Подписаться на уведомления', callback_data='notifications')]
+])
+
+
+notifications_types = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Тренировки', callback_data='trainings'),
+     InlineKeyboardButton(text='Взвешивание', callback_data='weighting')]
+])
+
+
+trainings_types = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Все тренировки', callback_data='all_trainings')],
+    [InlineKeyboardButton(text='Только с включёнными уведомлениями', callback_data='not_all_trainings')]
+])
+
+
+def get_time_kb(selected=None, custom_values=None):
+    '''
+    custom_values = {name: {'value': 1, 'unit': 1}}
+    '''
+    if selected is None:
+        selected = []
+    if custom_values is None:
+        custom_values = {}
+
+    kb = InlineKeyboardBuilder()
+
+    options = [TimeOption.EVENT, TimeOption.MIN_10, TimeOption.HOUR_1, TimeOption.DAY_1]
+    for option in options:
+        postfix = ' ✔️' if option.name in selected else ''
+        kb.row(InlineKeyboardButton(
+            text=f"{option.value}{postfix}",
+            callback_data=cb_option(option.name)
+        ))
+
+    for custom_option in custom_values:
+        value, unit_idx = custom_values[custom_option]['value'], custom_values[custom_option]['unit']
+        unit = UNITS[unit_idx%len(UNITS)].value
+        kb.row(
+            InlineKeyboardButton(text='➖', callback_data=cb_change_custom(custom_option, 'minus')),
+            InlineKeyboardButton(text=f'{value}', callback_data=cb_change_custom(custom_option, 'change_value')),
+            InlineKeyboardButton(text='➕', callback_data=cb_change_custom(custom_option, 'plus')),
+            InlineKeyboardButton(text=f'{unit}', callback_data=cb_change_custom(custom_option, 'change_unit')),
+            InlineKeyboardButton(text='🗑', callback_data=cb_change_custom(custom_option, 'delete'))
+        )
+
+    if len(selected) < TIME_OPTIONS_LIMIT:
+        kb.row(InlineKeyboardButton(text="Произвольное ➕", callback_data=cb_custom()))
+    
+    kb.row(InlineKeyboardButton(text="Подтвердить ✔️", callback_data=cb_confirm()))
+
+    return kb.as_markup()
