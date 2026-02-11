@@ -8,13 +8,18 @@ from bot.states import UserStates
 
 class TimeInterface():
 
-    def __init__(self, callback: CallbackQuery, callback_data: TimeCB, state: FSMContext, state_data: dict):
+    @classmethod
+    async def create_instance(cls, callback, callback_data, state):
+        instance = cls(callback, callback_data, state)
+        data = await state.get_data()
+        instance.selected = data.get('NOTIFICATION_TIME_LIST', [])
+        instance.custom_values = data.get('NOTIFICATION_TIME_CUSTOM_DICT', {})
+        return instance
+
+    def __init__(self, callback: CallbackQuery, callback_data: TimeCB, state: FSMContext):
         
         self.callback = callback
         self.state = state
-
-        self.selected = state_data.get('NOTIFICATION_TIME_LIST', [])
-        self.custom_values = state_data.get('NOTIFICATION_TIME_CUSTOM_DICT', {})
             
         self.action = callback_data.action
         self.option_name = callback_data.option_name
@@ -40,10 +45,14 @@ class TimeInterface():
             return
 
         await self.handlers[action]()
+    
+    async def update_state(self):
+        await self.state.update_data(NOTIFICATION_TIME_LIST=self.selected,
+                                     NOTIFICATION_TIME_CUSTOM_DICT=self.custom_values)
 
     async def _process_custom(self):
         callback, state, selected, custom_values = self.callback, self.state, self.selected, self.custom_values
-        await callback.answer()
+        # await callback.answer()
         new_custom = (len(custom_values) + 1)
         selected.append(new_custom)
         custom_values[new_custom] = {'value': 1, 'unit': 0}
@@ -54,53 +63,61 @@ class TimeInterface():
             )
         return
 
-    async def _process_change_custom(self):
-        callback, state, selected, custom_values = self.callback, self.state, self.selected, self.custom_values
-        custom_name, action = self.custom_idx, self.custom_action
+    async def _process_change_custom_plus(self):
 
-        if action == 'plus':
-
-            if custom_values[custom_name]['value'] == CUSTOM_TIME_NUMBER_MAX:
-                await callback.answer('Достигнуто максимальное значение')
-                return
-            await callback.answer()
-            custom_values[custom_name]['value'] += 1
-
-        elif action == 'minus':
-
-            if custom_values[custom_name]['value'] == CUSTOM_TIME_NUMBER_MIN:
-                await callback.answer('Достигнуто минимальное значение')
-                return
-            await callback.answer()
-            custom_values[custom_name]['value'] -= 1
-
-        elif action == 'delete':
-
-            await callback.answer('Время удалено')
-            del custom_values[custom_name]
-            selected.remove(custom_name)
-
-        elif action == 'change_value':
-
-            await callback.answer()
-            await state.update_data(CUSTOM_TIME_KEY=custom_name)
-            await state.set_state(UserStates.CUSTOM_TIME_NUMBER)
-            await callback.message.edit_text(f'Введите целое число от {CUSTOM_TIME_NUMBER_MIN} до {CUSTOM_TIME_NUMBER_MAX}')
+        if self.custom_values[self.custom_idx]['value'] == CUSTOM_TIME_NUMBER_MAX:
+            await self.callback.answer('Достигнуто максимальное значение')
             return
         
-        elif action == 'change_unit':
+        await self.callback.answer()
+        self.custom_values[self.custom_idx]['value'] += 1
 
-            await callback.answer()
-            custom_values[custom_name]['unit'] += 1
+    async def _process_change_custom_minus(self):
 
-        else:
-            await callback.answer()
+        if self.custom_values[self.custom_idx]['value'] == CUSTOM_TIME_NUMBER_MIN:
+            await self.callback.answer('Достигнуто минимальное значение')
+            return
+        
+        await self.callback.answer()
+        self.custom_values[self.custom_idx]['value'] -= 1
 
-        await state.update_data(NOTIFICATION_TIME_CUSTOM_DICT=custom_values)
-        await callback.message.edit_reply_markup(
-            reply_markup=kb.get_time_kb(selected, custom_values)
-        )
+    async def _process_change_custom_delete(self):
+
+        await self.callback.answer('Время удалено')
+        del self.custom_values[self.custom_idx]
+        self.selected.remove(self.custom_idx)
+
+    async def _process_change_custom_change_value(self):
+
+        await self.callback.answer()
+        await self.state.update_data(CUSTOM_TIME_KEY=self.custom_idx)
+        await self.state.set_state(UserStates.CUSTOM_TIME_NUMBER)
+        await self.callback.message.edit_text(f'Введите целое число от {CUSTOM_TIME_NUMBER_MIN} до {CUSTOM_TIME_NUMBER_MAX}')
         return
+
+    async def _process_change_custom_change_unit(self):
+
+        await self.callback.answer()
+        self.custom_values[self.custom_idx]['unit'] += 1
+
+    async def _process_change_custom(self):
+
+        custom_handlers = {
+            'plus': self._process_change_custom_plus,
+            'minus': self._process_change_custom_minus,
+            'delete': self._process_change_custom_delete,
+            'change_value': self._process_change_custom_change_value,
+            'change_unit': self._process_change_custom_change_unit,
+        }
+
+        await custom_handlers[self.custom_action]()
+
+        if self.custom_action != 'change_value':
+            await self.state.update_data(NOTIFICATION_TIME_CUSTOM_DICT=self.custom_values)
+            await self.callback.message.edit_reply_markup(
+                reply_markup=kb.get_time_kb(self.selected, self.custom_values)
+            )
+            return
 
     async def _process_option(self):
         callback, state, selected, custom_values = self.callback, self.state, self.selected, self.custom_values
@@ -119,7 +136,7 @@ class TimeInterface():
         await state.clear()
 
         content: list[str] = [
-            (TimeOption._member_map_[s].value if not s.startswith('CUSTOM') else 
+            (TimeOption._member_map_[s].value if not isinstance(s, int) else 
             f'за {custom_values[s]["value"]} {UNITS[custom_values[s]["unit"]%len(UNITS)].value}') 
             for s in selected
         ]

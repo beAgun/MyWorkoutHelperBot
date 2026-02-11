@@ -5,7 +5,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
     BOT_TOKEN: str
-    WEBHOOK_PATH: str = ''
+    WEBHOOK_URL: str
+    WEBHOOK_PATH: str
 
 
 settings = Settings()

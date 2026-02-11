@@ -53,9 +53,9 @@ async def time(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(TimeCB.filter())
 async def choose_time(callback: CallbackQuery, callback_data: TimeCB, state: FSMContext):
     
-    # data = await state.get_data()
-    # await TimeInterface(callback, callback_data, state, data).process_time_callback_query()
-    await choose_time_proccessor(callback, callback_data, state)
+    ins = await TimeInterface.create_instance(callback, callback_data, state)
+    await ins.process_time_callback_query()
+    # await choose_time_proccessor(callback, callback_data, state)
     
 
 @router.message(UserStates.CUSTOM_TIME_NUMBER)
