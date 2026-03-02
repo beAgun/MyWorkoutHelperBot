@@ -30,10 +30,13 @@ trainings_types = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 
-def get_time_kb(selected=None, custom_values=None):
-    '''
-    custom_values = {name: {'value': 1, 'unit': 1}}
-    '''
+def get_time_kb(selected=None, custom_values=None, redraw_only: int = None):
+    """
+    Создаёт клавиатуру для выбора времени уведомлений.
+    :param selected: список выбранных опций (str или int для кастомных)
+    :param custom_values: словарь кастомных значений {1: {'value': 5, 'unit': 0}, ...}
+    :param redraw_only: если указано, перерисовываем только эту кастомную кнопку
+    """
     if selected is None:
         selected = []
     if custom_values is None:
@@ -41,8 +44,7 @@ def get_time_kb(selected=None, custom_values=None):
 
     kb = InlineKeyboardBuilder()
 
-    options = [TimeOption.EVENT, TimeOption.MIN_10, TimeOption.HOUR_1, TimeOption.DAY_1]
-    for option in options:
+    for option in TIME_OPTIONS:
         postfix = ' ✔️' if option.name in selected else ''
         kb.row(InlineKeyboardButton(
             text=f"{option.value}{postfix}",

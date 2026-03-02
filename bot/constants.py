@@ -15,7 +15,8 @@ class CustomTimeOptionUnit(Enum):
     days = 'сут.'
     weeks = 'нед.'
     
-    
+
+TIME_OPTIONS = [TimeOption.EVENT, TimeOption.MIN_10, TimeOption.HOUR_1, TimeOption.DAY_1]
 UNITS = list(CustomTimeOptionUnit)
 TIME_OPTIONS_LIMIT = 5
 CUSTOM_TIME_NUMBER_MIN = 0

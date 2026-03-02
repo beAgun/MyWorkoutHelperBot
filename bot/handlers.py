@@ -6,7 +6,7 @@ import bot.keyboards as kb
 from aiogram.fsm.context import FSMContext
 from bot.constants import *
 from bot.callbacks_types import *
-from bot.service import TimeInterface, choose_time_proccessor
+from bot.service import TimeInterface
 
 
 router = Router()
@@ -14,6 +14,9 @@ router = Router()
 
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
+    print(message)
+    print(message.from_user.__dict__)
+    print(message.chat.__dict__)
     await state.clear()
     # await message.reply(text='...', reply_markup=kb.start)
     await message.answer(
