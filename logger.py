@@ -50,6 +50,11 @@ dictConfig(
                 "handlers": handlers_keys,
                 "propagate": False,
             },
+            "scheduler": {
+                "level": settings.LOG_LEVEL,
+                "handlers": handlers_keys,
+                "propagate": False,
+            },
             # "sqlalchemy": {
             #     "level": settings.LOG_LEVEL,
             #     "handlers": handlers_keys,

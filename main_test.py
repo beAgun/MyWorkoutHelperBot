@@ -4,6 +4,7 @@ from config import settings
 from app.bot.handlers import router
 from app.bot.handlers import router
 from config import settings
+from app.scheduler.scheduler import scheduler_manager
 import sys
 import warnings
 from tests.database import prepare_test_database, seed_test_data
@@ -20,7 +21,8 @@ async def main():
     bot = Bot(token=settings.BOT_TOKEN)
     dp = Dispatcher()
     dp.include_router(router)
-    await dp.start_polling(bot)
+    async with scheduler_manager(bot):
+        await dp.start_polling(bot)
 
 
 if __name__ == "__main__":

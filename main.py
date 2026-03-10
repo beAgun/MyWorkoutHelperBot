@@ -8,6 +8,7 @@ from aiogram.types import Update
 from app.bot.handlers import router
 from config import settings
 from logger import logger
+from app.scheduler.scheduler import scheduler_manager
 
 
 @asynccontextmanager
@@ -19,10 +20,11 @@ async def lifespan(app: FastAPI):
     app.state.bot = bot
     app.state.dp = dp
 
-    await bot.set_webhook(settings.WEBHOOK_URL)
-    yield
-    await bot.delete_webhook()
-    await bot.session.close()
+    async with scheduler_manager(bot):
+        await bot.set_webhook(settings.WEBHOOK_URL)
+        yield
+        await bot.delete_webhook()
+        await bot.session.close()
 
 
 app = FastAPI(lifespan=lifespan)
