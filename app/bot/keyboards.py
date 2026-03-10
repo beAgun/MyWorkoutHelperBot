@@ -5,8 +5,8 @@ from aiogram.types import (
     InlineKeyboardMarkup
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from bot.constants import *
-from bot.callbacks_types import *
+from app.bot.constants import *
+from app.bot.callbacks_types import *
 
 start = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='/start')]

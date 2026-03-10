@@ -1,12 +1,12 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 from aiogram.filters import CommandStart, Command
-from bot.states import UserStates
-import bot.keyboards as kb
+from app.bot.states import UserStates
+import app.bot.keyboards as kb
 from aiogram.fsm.context import FSMContext
-from bot.constants import *
-from bot.callbacks_types import *
-from bot.service import TimeInterface
+from app.bot.constants import *
+from app.bot.callbacks_types import *
+from app.services.service import TimeInterface
 
 
 router = Router()
@@ -14,9 +14,6 @@ router = Router()
 
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
-    print(message)
-    print(message.from_user.__dict__)
-    print(message.chat.__dict__)
     await state.clear()
     # await message.reply(text='...', reply_markup=kb.start)
     await message.answer(
