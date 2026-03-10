@@ -1,8 +1,8 @@
 """create users, notifications_rules, notifications tables
 
-Revision ID: 8644746f3f0b
+Revision ID: 8df7eb14c0f6
 Revises: 
-Create Date: 2026-02-27 21:36:53.156471
+Create Date: 2026-03-04 15:17:30.341082
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8644746f3f0b'
+revision: str = '8df7eb14c0f6'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -24,16 +24,16 @@ def upgrade() -> None:
     op.create_table('users',
     sa.Column('id', sa.Integer(), sa.Identity(always=False), nullable=False),
     sa.Column('chat_id', sa.BigInteger(), nullable=False),
-    sa.Column('username', sa.VARCHAR(), nullable=False),
-    sa.Column('first_name', sa.VARCHAR(), nullable=True),
-    sa.Column('last_name', sa.VARCHAR(), nullable=True),
+    sa.Column('username', sa.String(length=64), nullable=False),
+    sa.Column('first_name', sa.String(length=64), nullable=True),
+    sa.Column('last_name', sa.String(length=64), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('chat_id'),
     sa.UniqueConstraint('username')
     )
     op.create_table('notifications_rules',
     sa.Column('id', sa.Integer(), sa.Identity(always=False), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('only_enabled', sa.Boolean(), nullable=False),
     sa.Column('workout_id', sa.Integer(), nullable=True),
     sa.Column('offset_minutes', sa.Integer(), nullable=False),
@@ -43,11 +43,11 @@ def upgrade() -> None:
     )
     op.create_table('notifications',
     sa.Column('id', sa.Integer(), sa.Identity(always=False), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('chat_id', sa.BigInteger(), nullable=False),
     sa.Column('workout_id', sa.Integer(), nullable=True),
-    sa.Column('rule_id', sa.Integer(), nullable=True),
-    sa.Column('notify_at', sa.Date(), nullable=False),
+    sa.Column('rule_id', sa.Integer(), nullable=False),
+    sa.Column('notify_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('sent', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['rule_id'], ['notifications_rules.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),

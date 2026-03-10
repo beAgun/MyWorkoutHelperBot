@@ -1,9 +1,9 @@
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
-from bot.callbacks_types import TimeCB
-import bot.keyboards as kb
-from bot.constants import *
-from bot.states import UserStates
+from app.bot.callbacks_types import TimeCB
+import app.bot.keyboards as kb
+from app.bot.constants import *
+from app.bot.states import UserStates
 
 
 class TimeInterface():

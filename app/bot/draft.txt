@@ -1,0 +1,51 @@
+----------------------------Telegram UPDATE: (message obg)-----------------------------------------------------------
+message_id=315 
+
+date=datetime.datetime(2026, 2, 27, 18, 22, 47, tzinfo=TzInfo(0)) 
+
+chat=Chat(
+id=1356187993, 
+type='private', 
+title=None, 
+username='WATIK25', 
+first_name='Wate', 
+last_name=None,
+...)
+
+from_user=User(
+id=1356187993, 
+first_name='Wate', 
+last_name=None, 
+username='WATIK25', 
+language_code='en', 
+has_main_web_app=None,
+...) 
+
+text='/start' 
+----------------------------------------------Loggers----------------------------------------------------------------
+import logging
+print(sorted(logging.root.manager.loggerDict.keys()))
+
+['aiogram', 'aiogram.dispatcher', 'aiogram.event', 'aiogram.middlewares', 
+'aiogram.scene', 'aiogram.webhook', 'aiohttp', 'aiohttp.access', 
+'aiohttp.client', 'aiohttp.internal', 'aiohttp.server', 'aiohttp.web', 
+'aiohttp.websocket', 'apscheduler', 'apscheduler.executors', 'apscheduler.executors.async_executor', 
+'apscheduler.executors.default', 'apscheduler.jobstores', 'apscheduler.jobstores.default', 
+'apscheduler.scheduler', 'asyncio', 'asyncpg', 'asyncpg.pool', 'concurrent', 'concurrent.futures', 
+'dotenv', 'dotenv.main', 'fastapi', 'logger', 'redis', 'redis._parsers', 'redis._parsers.base', 
+'redis.asyncio', 'redis.asyncio.lock', 'redis.cluster', 'redis.credentials', 'redis.lock', 
+'redis.maint_notifications', 'redis.observability', 'redis.observability.metrics', 'redis.observability.providers', 
+'sqlalchemy', 'sqlalchemy.dialects', 'sqlalchemy.dialects.postgresql', 'sqlalchemy.engine', 
+'sqlalchemy.engine.Engine', 'sqlalchemy.orm', 'sqlalchemy.orm.mapper', 'sqlalchemy.orm.mapper.Mapper', 
+'sqlalchemy.orm.path_registry', 'sqlalchemy.orm.properties', 'sqlalchemy.orm.properties.ColumnProperty', 
+'sqlalchemy.orm.query', 'sqlalchemy.orm.query.Query', 'sqlalchemy.orm.relationships', 
+'sqlalchemy.orm.relationships.RelationshipProperty', 'sqlalchemy.orm.strategies', 
+'sqlalchemy.orm.strategies.ColumnLoader', 'sqlalchemy.orm.strategies.DeferredColumnLoader', 
+'sqlalchemy.orm.strategies.DoNothingLoader', 'sqlalchemy.orm.strategies.ExpressionColumnLoader', 
+'sqlalchemy.orm.strategies.JoinedLoader', 'sqlalchemy.orm.strategies.LazyLoader', 
+'sqlalchemy.orm.strategies.NoLoader', 'sqlalchemy.orm.strategies.SelectInLoader', 
+'sqlalchemy.orm.strategies.SubqueryLoader', 'sqlalchemy.orm.writeonly', 'sqlalchemy.orm.writeonly.WriteOnlyLoader', 
+'sqlalchemy.pool', 'sqlalchemy.pool.impl', 'sqlalchemy.pool.impl.AsyncAdaptedQueuePool', 
+'tzlocal', 'uvicorn', 'uvicorn.error', 'watchfiles', 'watchfiles.main', 'watchfiles.watcher']
+
+8403471801
