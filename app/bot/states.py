@@ -2,6 +2,11 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
 
+class LinkUserStates(StatesGroup):
+    EMAIL = State()
+    LINK_CODE = State()
+
+
 class UserStates(StatesGroup):
     START = State()
     SUBSCRIBE = State()

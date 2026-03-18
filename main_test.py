@@ -8,6 +8,7 @@ import sys
 import warnings
 from tests.database import prepare_test_database, seed_test_data
 from app.db.database import session_manager
+from app.bot.middlewares import AuthMiddlewareMessage, AuthMiddlewareCallbackQuery
 
 
 async def main():
@@ -20,6 +21,8 @@ async def main():
     bot = Bot(token=settings.BOT_TOKEN)
     dp = Dispatcher()
     dp.include_router(router)
+    dp.message.middleware(AuthMiddlewareMessage())
+    dp.callback_query.middleware(AuthMiddlewareCallbackQuery())
     await dp.start_polling(bot)
 
 

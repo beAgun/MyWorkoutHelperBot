@@ -38,6 +38,8 @@ class Settings(BaseSettings):
     BOT_TOKEN: str
     WEBHOOK_URL: str
     WEBHOOK_PATH: str
+    WORKOUT_SITE_URL: str
+    TG_LINK_TOKEN: str
 
     MODE: Literal["DEV", "TEST", "PROD"]
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
