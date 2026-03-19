@@ -21,7 +21,7 @@ class UserRepo(ModelRepo):
     async def get_user_by_chat_id(cls, session: AsyncSession, chat_id: int):
         query = select(cls.model).filter_by(chat_id=chat_id)
         res = await session.execute(query)
-        return res.one_or_none()
+        return res.scalars().one_or_none()
 
     @classmethod
     async def save_unauthorized_user(

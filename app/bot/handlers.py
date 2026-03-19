@@ -36,7 +36,7 @@ async def cmd_start(message: Message, state: FSMContext, command: CommandObject)
         text = await handle_linking(message, token)
         kbd = kb.get_main_rkb()
     else:
-        if not await is_linked(message.from_user.id):
+        if not await is_linked(message.chat.id):
             text = (
                 "Я telegram бот для уведомлений! "
                 "Чтобы продолжить, привяжи аккаунт на сайте MyWorkoutTracker."
@@ -78,6 +78,8 @@ async def email_handler(message: Message, state: FSMContext):
         return
 
     msg = await get_email_link(email=validated_email, chat_id=message.chat.id)
+
+    await state.clear()
 
     await message.answer(text=msg)
 

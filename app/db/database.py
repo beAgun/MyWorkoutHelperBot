@@ -38,8 +38,7 @@ async def session_manager():
         await session.commit()
     except Exception as e:
         await session.rollback()
-        logger.error("Session manager exception:")
-        logger.exception(e)
+        raise e
     finally:
         await session.close()
 

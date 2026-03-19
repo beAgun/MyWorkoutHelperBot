@@ -23,7 +23,7 @@ class User(Base):
     )
     first_name: Mapped[str | None] = mapped_column(String(length=64))
     last_name: Mapped[str | None] = mapped_column(String(length=64))
-    site_user_id: Mapped[int | None] = mapped_column(Integer)
+    site_user_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     rules: Mapped[list["Rule"]] = relationship(
         "NotificationsRule", back_populates="user"

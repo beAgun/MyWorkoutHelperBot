@@ -8,7 +8,7 @@ from logger import logger
 from email_validator import validate_email, EmailNotValidError
 from aiogram.fsm.context import FSMContext
 from aiohttp import ClientSession
-from fastapi import HTMLResponse
+from fastapi.responses import HTMLResponse
 
 
 async def handle_linking(message: Message, token: str) -> str:
@@ -25,11 +25,11 @@ async def handle_linking(message: Message, token: str) -> str:
     async with session_manager() as session:
         await UserRepo.save_authorized_user(
             session=session,
-            chat_id=message.chat.id
-            username=message.from_user.username
-            first_name=message.from_user.first_name
-            last_name=message.from_user.last_name
-            site_user_id=site_user_id
+            chat_id=message.chat.id,
+            username=message.from_user.username,
+            first_name=message.from_user.first_name,
+            last_name=message.from_user.last_name,
+            site_user_id=site_user_id,
         )
     return "Telegram бот успешно привязан к аккаунту на сайте"
 
@@ -57,12 +57,11 @@ async def check_attempts(
 
 
 async def get_email_link(email: str, chat_id: int) -> str:
-    data = {"email": email, "chat_id": chat_id, "purpose": "telegram_link"}
+    data = {"email": email, "chat_id": chat_id}
 
     async with ClientSession() as session:
         response = await session.post(
-            url=f"{settings.WORKOUT_SITE_URL}/notifications/email-tg-link",
-            json=data
+            url=f"{settings.WORKOUT_SITE_URL}/notifications/email-tg-link/", json=data
         )
 
         if response.status == 200:
