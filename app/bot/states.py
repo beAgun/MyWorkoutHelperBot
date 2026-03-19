@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 
 class LinkUserStates(StatesGroup):
     EMAIL = State()
-    LINK_CODE = State()
+    EMAIL_ATTEMPTS = State()
 
 
 class UserStates(StatesGroup):

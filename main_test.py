@@ -1,28 +1,26 @@
 import asyncio
 from aiogram import Bot, Dispatcher
 from config import settings
-from app.bot.handlers import router
-from app.bot.handlers import router
+from app.bot.handlers import public_router, private_router
 from config import settings
 import sys
 import warnings
-from tests.database import prepare_test_database, seed_test_data
+from tests.database import *
 from app.db.database import session_manager
-from app.bot.middlewares import AuthMiddlewareMessage, AuthMiddlewareCallbackQuery
 
 
 async def main():
 
-    if settings.MODE == "TEST" and "--seed" in sys.argv:
+    if settings.MODE == "TEST":
         await prepare_test_database()
+    if "--seed" in sys.argv:
         async with session_manager() as session:
             await seed_test_data(session)
 
     bot = Bot(token=settings.BOT_TOKEN)
     dp = Dispatcher()
-    dp.include_router(router)
-    dp.message.middleware(AuthMiddlewareMessage())
-    dp.callback_query.middleware(AuthMiddlewareCallbackQuery())
+    dp.include_router(public_router)
+    dp.include_router(private_router)
     await dp.start_polling(bot)
 
 

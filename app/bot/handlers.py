@@ -7,15 +7,26 @@ from aiogram.fsm.context import FSMContext
 from app.bot.constants import *
 from app.bot.callbacks_types import *
 from app.services.service import TimeInterface
-from app.services.utils import handle_linking, validate_user_email
+from app.services.utils import *
 from config import settings
 from app.bot.middlewares import is_linked
+from app.bot.middlewares import (
+    AuthMiddlewareMessage,
+    AuthMiddlewareCallbackQuery,
+    PublicAuthMiddleware,
+)
 
 
-router = Router()
+public_router = Router()
+private_router = Router()
+
+public_router.message.middleware(PublicAuthMiddleware())
+public_router.callback_query.middleware(PublicAuthMiddleware())
+private_router.message.middleware(AuthMiddlewareMessage())
+private_router.callback_query.middleware(AuthMiddlewareCallbackQuery())
 
 
-@router.message(CommandStart())
+@public_router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext, command: CommandObject):
     await state.clear()
 
@@ -49,35 +60,39 @@ async def start_linking(message: Message, state: FSMContext):
     )
 
 
-@router.callback_query(LinkUserStates.EMAIL)
-async def trainings(callback: CallbackQuery, state: FSMContext):
-    await callback.answer()
-    validated_email = validate_user_email(email=callback.data)
+@public_router.message(LinkUserStates.EMAIL)
+async def email_handler(message: Message, state: FSMContext):
+    ok = await check_attempts(state, "EMAIL_ATTEMPTS")
+
+    if not ok:
+        await state.clear()
+        await message.answer("Слишком много попыток. Попробуйте начать сначала")
+        return
+
+    validated_email = validate_user_email(email=message.text)
     if validated_email is None:
         await state.set_state(LinkUserStates.EMAIL)
-        await callback.answer(
+        await message.answer(
             text=f"Формат адреса почты неверный. Введите заново", show_alert=True
         )
         return
 
-    # site_request_for_email(email=validated_email)
-    await state.set_data(LinkUserStates.LINK_CODE)
-    await callback.message.answer(
-        text="На указанный почтовый адрес придёт сообщение с кодом из 6 цифр. Введите его",
-    )
+    msg = await get_email_link(email=validated_email, chat_id=message.chat.id)
+
+    await message.answer(text=msg)
 
 
-@router.message(Command("link"))
+@public_router.message(Command("link"))
 async def cmd_link(message: Message, state: FSMContext):
     await start_linking(message, state)
 
 
-@router.callback_query(F.data == "link")
+@public_router.callback_query(F.data == "link")
 async def cb_link(callback: CallbackQuery, state: FSMContext):
     await start_linking(callback.message, state)
 
 
-@router.message(Command("description"))
+@public_router.message(Command("description"))
 async def cmd_description(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(
@@ -91,12 +106,12 @@ async def cmd_description(message: Message, state: FSMContext):
     )
 
 
-@router.message(Command("visit_site"))
+@public_router.message(Command("visit_site"))
 async def cmd_visit_site(message: Message):
     await message.answer(f"Добро пожаловать!", reply_markup=kb.visit_site)
 
 
-@router.callback_query(F.data == "notifications")
+@private_router.callback_query(F.data == "notifications")
 async def notifications(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await state.set_state(UserStates.NOTIFICATION_TYPE)
@@ -105,7 +120,7 @@ async def notifications(callback: CallbackQuery, state: FSMContext):
     )
 
 
-@router.callback_query(UserStates.NOTIFICATION_TYPE)
+@private_router.callback_query(UserStates.NOTIFICATION_TYPE)
 async def trainings(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await state.update_data(NOTIFICATION_TYPE=callback.data)
@@ -117,7 +132,7 @@ async def trainings(callback: CallbackQuery, state: FSMContext):
     )
 
 
-@router.callback_query(UserStates.TRAININGS_NOTIFICATION_TYPE)
+@private_router.callback_query(UserStates.TRAININGS_NOTIFICATION_TYPE)
 async def time(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await state.update_data(TRAININGS_NOTIFICATION_TYPE=callback.data)
@@ -127,7 +142,7 @@ async def time(callback: CallbackQuery, state: FSMContext):
     )
 
 
-@router.callback_query(TimeCB.filter())
+@private_router.callback_query(TimeCB.filter())
 async def choose_time(
     callback: CallbackQuery, callback_data: TimeCB, state: FSMContext
 ):
@@ -137,7 +152,7 @@ async def choose_time(
     # await choose_time_proccessor(callback, callback_data, state)
 
 
-@router.message(UserStates.CUSTOM_TIME_NUMBER)
+@private_router.message(UserStates.CUSTOM_TIME_NUMBER)
 async def number_entered(message: Message, state: FSMContext):
     text = message.text.strip()
 
