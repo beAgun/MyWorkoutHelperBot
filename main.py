@@ -1,16 +1,19 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, APIRouter
 from contextlib import asynccontextmanager
 import uvicorn
 from aiogram import Bot, Dispatcher
 from config import settings
-from app.bot.handlers import public_router, private_router
+from app.bot.handlers.public import public_router
+from app.bot.handlers.private import private_router
 from aiogram.types import Update
 from config import settings
 from logger import logger
-from app.services.utils import resolve_token
-from tests.database import *
+from app.utils import resolve_token
+from tests.database import prepare_test_database, seed_test_data
 import sys
 from app.db.database import session_manager
+from aiogram.client.session.aiohttp import AiohttpSession
+from aiohttp_socks import ProxyConnector
 
 
 @asynccontextmanager
@@ -21,7 +24,9 @@ async def lifespan(app: FastAPI):
         async with session_manager() as session:
             await seed_test_data(session)
 
-    bot = Bot(token=settings.BOT_TOKEN)
+    session = AiohttpSession(proxy="socks5://127.0.0.1:1080")
+
+    bot = Bot(token=settings.BOT_TOKEN, session=session)
     dp = Dispatcher()
     dp.include_router(public_router)
     dp.include_router(private_router)
@@ -29,16 +34,17 @@ async def lifespan(app: FastAPI):
     app.state.bot = bot
     app.state.dp = dp
 
-    await bot.set_webhook(settings.WEBHOOK_URL)
+    # await bot.set_webhook(settings.WEBHOOK_URL)
     yield
-    await bot.delete_webhook()
+    # await bot.delete_webhook()
     await bot.session.close()
 
 
 app = FastAPI(lifespan=lifespan)
+router = APIRouter(prefix="/telegram")
 
 
-@app.post(settings.WEBHOOK_PATH)
+@router.post(settings.WEBHOOK_PATH)
 async def webhook(request: Request):
     try:
         bot = request.app.state.bot
@@ -53,9 +59,12 @@ async def webhook(request: Request):
         return Response(status_code=200)
 
 
-@app.get("/resolve-link-token")
+@router.get("/resolve-link-token/")
 async def resolve_link_token(token: str):
-    await resolve_token(token)
+    return await resolve_token(token)
+
+
+app.include_router(router)
 
 
 if __name__ == "__main__":

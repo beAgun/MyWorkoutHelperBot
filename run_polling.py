@@ -1,7 +1,8 @@
 import asyncio
 from aiogram import Bot, Dispatcher
 from config import settings
-from app.bot.handlers import public_router, private_router
+from app.bot.handlers.public import public_router
+from app.bot.handlers.private import private_router
 from config import settings
 import sys
 import warnings

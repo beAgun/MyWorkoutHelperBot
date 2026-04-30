@@ -23,7 +23,7 @@ async def seed_test_data(session: AsyncSession):
     workout3_start_at = now + timedelta(minutes=offset) + timedelta(minutes=1)
     workout4_start_at = now + timedelta(minutes=offset) + timedelta(minutes=2)
 
-    user = User(chat_id=1356187993, username="test")
+    user = User(chat_id=1356187993, username="test", site_user_id=1)
     rule = NotificationsRule(user=user, offset_minutes=offset)
 
     workouts = [

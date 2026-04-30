@@ -40,25 +40,6 @@ class UserRepo(ModelRepo):
         )
         session.add(user)
 
-    @classmethod
-    async def save_authorized_user(
-        cls,
-        session: AsyncSession,
-        chat_id: int,
-        username: str,
-        first_name: str,
-        last_name: str,
-        site_user_id: int,
-    ):
-        user = User(
-            chat_id=chat_id,
-            username=username,
-            first_name=first_name,
-            last_name=last_name,
-            site_user_id=site_user_id,
-        )
-        session.add(user)
-
 
 class NotificationsRuleRepo(ModelRepo):
     model = NotificationsRule

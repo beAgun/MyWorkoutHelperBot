@@ -1,3 +1,11 @@
+selected ['EVENT', 'MIN_10', 1, 'HOUR_1', 'DAY_1']
+custom_values {1: {'value': 2, 'unit': 1}}
+NOTIFICATION_TYPE trainings
+TRAININGS_NOTIFICATION_TYPE not_all_trainings
+
+
+
+
     self.close()
   File "C:\Users\Анастасия\AppData\Local\Programs\Python\Python310\lib\asyncio\proactor_events.py", line 108, in close
     self._loop.call_soon(self._call_connection_lost, None)

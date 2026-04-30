@@ -41,7 +41,7 @@ class NotificationsRule(Base):
     only_enabled: Mapped[bool | None] = mapped_column(
         Boolean, nullable=False, default=False
     )
-    workout_id: Mapped[int | None] = mapped_column(Integer)
+    workout_id: Mapped[int | None] = mapped_column(Integer, default=None)
     offset_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
 
     user: Mapped["User"] = relationship("User", back_populates="rules")

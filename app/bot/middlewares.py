@@ -2,32 +2,11 @@ from aiogram import BaseMiddleware
 from aiogram.types import Message, CallbackQuery
 import app.bot.keyboards as kb
 from app.db.models_repo import *
-from app.db.database import session_manager
-
-
-async def is_saved_user(chat_id: int):
-    async with session_manager() as session:
-        user = await UserRepo.get_user_by_chat_id(session=session, chat_id=chat_id)
-        return user
-
-
-async def save_unauthorized_user(event: Message | CallbackQuery):
-    async with session_manager() as session:
-        await UserRepo.save_unauthorized_user(
-            session=session,
-            chat_id=event.chat.id,
-            username=event.from_user.username,
-            first_name=event.from_user.first_name,
-            last_name=event.from_user.last_name,
-        )
-
-
-async def is_linked(chat_id: int):
-    async with session_manager() as session:
-        user = await UserRepo.get_user_by_chat_id(session=session, chat_id=chat_id)
-        if user:
-            return user.site_user_id
-        return None
+from app.application.user.repository import (
+    is_saved_user,
+    save_unauthorized_user,
+    is_linked,
+)
 
 
 class PublicAuthMiddleware(BaseMiddleware):
@@ -42,13 +21,18 @@ class PublicAuthMiddleware(BaseMiddleware):
             return await handler(event, data)
 
         if not await is_saved_user(chat_id):
-            await save_unauthorized_user(event)
+            await save_unauthorized_user(
+                chat_id=chat_id,
+                username=event.from_user.username,
+                first_name=event.from_user.first_name,
+                last_name=event.from_user.last_name,
+            )
             return
 
         return await handler(event, data)
 
 
-class AuthMiddlewareMessage(BaseMiddleware):
+class PrivateAuthMiddlewareMessage(BaseMiddleware):
 
     async def __call__(self, handler, event: Message, data):
 
@@ -59,7 +43,7 @@ class AuthMiddlewareMessage(BaseMiddleware):
         return await handler(event, data)
 
 
-class AuthMiddlewareCallbackQuery(BaseMiddleware):
+class PrivateAuthMiddlewareCallbackQuery(BaseMiddleware):
 
     async def __call__(self, handler, event: CallbackQuery, data):
 

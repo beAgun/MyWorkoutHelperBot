@@ -38,7 +38,8 @@ class Settings(BaseSettings):
     BOT_TOKEN: str
     WEBHOOK_URL: str
     WEBHOOK_PATH: str
-    WORKOUT_SITE_URL: str
+    WORKOUT_SITE_URL: str  # TODO: should be url type?
+    WORKOUT_SITE_LINK: str
     TG_LINK_TOKEN: str
 
     MODE: Literal["DEV", "TEST", "PROD"]
