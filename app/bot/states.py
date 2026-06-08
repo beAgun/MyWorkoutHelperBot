@@ -1,14 +1,15 @@
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.fsm.context import FSMContext
+
+
+class LinkUserStates(StatesGroup):
+    EMAIL = State()
+    EMAIL_ATTEMPTS = State()
 
 
 class UserStates(StatesGroup):
-    START = State()
-    SUBSCRIBE = State()
     NOTIFICATION_TYPE = State()
     TRAININGS_NOTIFICATION_TYPE = State()
-    NOTIFICATION_TIME_LIST = State()
-    NOTIFICATION_TIME_CUSTOM_DICT = State()
-    CUSTOM_TIME_KEY = State()
-    CUSTOM_TIME_NUMBER = State()
-    CONFIRM = State()
+    NOTIFICATIONS_TIMES = State()
+
+    CUSTOM_KEY = State()
+    CUSTOM_VALUE = State()

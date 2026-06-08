@@ -6,7 +6,6 @@ from app.infra.telegram_sender import TelegramSender, Message
 from app.db.repo import Repo
 from tests.utils import async_timed
 
-
 local_tz = settings.LOCAL_TZ
 
 
@@ -27,7 +26,7 @@ async def send_trainings_notifications(bot):
         formatted_data = [
             Message(
                 item.chat_id,
-                f"{item.name or 'Тренировка'} начнётся в {format_date(item.start_at)}",
+                f"{item.title or 'Тренировка'} начнётся в {format_date(item.start_at)}",
             )
             for item in data
         ]

@@ -1,70 +1,144 @@
 from aiogram.types import (
-    ReplyKeyboardMarkup, 
-    KeyboardButton, 
-    InlineKeyboardButton, 
-    InlineKeyboardMarkup
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from app.bot.constants import *
-from app.bot.callbacks_types import *
+from config import settings
+from app.domain.notifications.notifications_settings import *
+from app.application.actions.actions import Actions
 
-start = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text='/start')]
-], resize_keyboard=True)
-
-
-main = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Подписаться на уведомления', callback_data='notifications')]
-])
+BASE_CMDS = ["start", "link", "visit_site", "description"]
 
 
-notifications_types = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Тренировки', callback_data='trainings'),
-     InlineKeyboardButton(text='Взвешивание', callback_data='weighting')]
-])
+link = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="Привязать аккаунт", callback_data="link")]
+    ]
+)
+
+visit_site = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="Посетить сайт", url=settings.WORKOUT_SITE_LINK)]
+    ]
+)
 
 
-trainings_types = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Все тренировки', callback_data='all_trainings')],
-    [InlineKeyboardButton(text='Только с включёнными уведомлениями', callback_data='not_all_trainings')]
-])
+subscribe = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text=NotificationsSettingsAction.subscribe.label,
+                callback_data=NotificationsSettingsAction.subscribe.code,
+            )
+        ]
+    ]
+)
 
 
-def get_time_kb(selected=None, custom_values=None, redraw_only: int = None):
+edit_or_unsubscribe = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text=NotificationsSettingsAction.edit.label,
+                callback_data=NotificationsSettingsAction.edit.code,
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=NotificationsSettingsAction.unsubscribe.label,
+                callback_data=NotificationsSettingsAction.unsubscribe.code,
+            )
+        ],
+    ]
+)
+
+
+claim_unsubscribe = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="Подтвердить удаление", callback_data="claim_unsubscribe"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Вернуться назад", callback_data="edit_or_unsubscribe"
+            )
+        ],
+    ]
+)
+
+
+notification_types = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(text=item.label, callback_data=item.code)
+            for item in NotificationType
+        ]
+    ]
+)
+
+
+trainings_notification_types = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text=item.label, callback_data=item.code)]
+        for item in TrainingsNotificationType
+    ]
+)
+
+
+def get_time_kb(notifications_times: NotificationsTimesList):
     """
     Создаёт клавиатуру для выбора времени уведомлений.
-    :param selected: список выбранных опций (str или int для кастомных)
-    :param custom_values: словарь кастомных значений {1: {'value': 5, 'unit': 0}, ...}
-    :param redraw_only: если указано, перерисовываем только эту кастомную кнопку
+    :param notifications_times: список опций
     """
-    if selected is None:
-        selected = []
-    if custom_values is None:
-        custom_values = {}
-
     kb = InlineKeyboardBuilder()
+    # notifications_times.sort(key=lambda time: time.is_preset)
 
-    for option in TIME_OPTIONS:
-        postfix = ' ✔️' if option.name in selected else ''
-        kb.row(InlineKeyboardButton(
-            text=f"{option.value}{postfix}",
-            callback_data=cb_option(option.name)
-        ))
+    for option in notifications_times:
+        if option.is_preset:
+            postfix = " ✔️" if option.chosen else ""
+            kb.row(
+                InlineKeyboardButton(
+                    text=f"{option.label}{postfix}",
+                    callback_data=Actions.change_preset.cb_data(option.key),
+                )
+            )
+        else:
+            kb.row(
+                InlineKeyboardButton(
+                    text="➖",
+                    callback_data=Actions.minus_custom_value.cb_data(option.key),
+                ),
+                InlineKeyboardButton(
+                    text=f"{option.value}",
+                    callback_data=Actions.enter_custom_value.cb_data(option.key),
+                ),
+                InlineKeyboardButton(
+                    text="➕",
+                    callback_data=Actions.plus_custom_value.cb_data(option.key),
+                ),
+                InlineKeyboardButton(
+                    text=f"{option.unit.label}",
+                    callback_data=Actions.change_custom_unit.cb_data(option.key),
+                ),
+                InlineKeyboardButton(
+                    text="🗑",
+                    callback_data=Actions.delete_custom.cb_data(option.key),
+                ),
+            )
 
-    for custom_option in custom_values:
-        value, unit_idx = custom_values[custom_option]['value'], custom_values[custom_option]['unit']
-        unit = UNITS[unit_idx%len(UNITS)].value
+    if sum(item.chosen for item in notifications_times) < TIME_OPTIONS_LIMIT:
         kb.row(
-            InlineKeyboardButton(text='➖', callback_data=cb_change_custom(custom_option, 'minus')),
-            InlineKeyboardButton(text=f'{value}', callback_data=cb_change_custom(custom_option, 'change_value')),
-            InlineKeyboardButton(text='➕', callback_data=cb_change_custom(custom_option, 'plus')),
-            InlineKeyboardButton(text=f'{unit}', callback_data=cb_change_custom(custom_option, 'change_unit')),
-            InlineKeyboardButton(text='🗑', callback_data=cb_change_custom(custom_option, 'delete'))
+            InlineKeyboardButton(
+                text="Произвольное ➕", callback_data=Actions.add_custom.cb_data()
+            )
         )
 
-    if len(selected) < TIME_OPTIONS_LIMIT:
-        kb.row(InlineKeyboardButton(text="Произвольное ➕", callback_data=cb_custom()))
-    
-    kb.row(InlineKeyboardButton(text="Подтвердить ✔️", callback_data=cb_confirm()))
+    kb.row(
+        InlineKeyboardButton(
+            text="Подтвердить ✔️", callback_data=Actions.confirm.cb_data()
+        )
+    )
 
     return kb.as_markup()

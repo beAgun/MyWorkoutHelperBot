@@ -50,7 +50,7 @@ dictConfig(
                 "handlers": handlers_keys,
                 "propagate": False,
             },
-            "scheduler": {
+            "celery": {
                 "level": settings.LOG_LEVEL,
                 "handlers": handlers_keys,
                 "propagate": False,

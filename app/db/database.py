@@ -2,11 +2,10 @@ import json
 from functools import partial
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass
 from config import settings
 from contextlib import asynccontextmanager
 from logger import logger
-
 
 if settings.MODE == "TEST":
     DATABASE_URL = settings.TEST_DATABASE_URL
@@ -38,13 +37,12 @@ async def session_manager():
         await session.commit()
     except Exception as e:
         await session.rollback()
-        logger.error("Session manager exception:")
-        logger.exception(e)
+        raise e
     finally:
         await session.close()
 
 
-class Base(DeclarativeBase):
+class Base(MappedAsDataclass, DeclarativeBase):
     _test_data = list()
 
     @classmethod
