@@ -4,6 +4,7 @@ import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import Base, engine
 from config import settings
+from app.db.database import session_manager
 
 
 async def prepare_test_database():
@@ -23,14 +24,31 @@ async def seed_test_data(session: AsyncSession):
     workout3_start_at = now + timedelta(minutes=offset) + timedelta(minutes=1)
     workout4_start_at = now + timedelta(minutes=offset) + timedelta(minutes=2)
 
-    user = User(chat_id=1356187993, username="test", site_user_id=1)
+    user = User(
+        chat_id=1356187993, username="test", site_user_id=1, notifications_enabled=True
+    )
     rule = NotificationsRule(user=user, offset_minutes=offset)
 
     workouts = [
-        Workout(name="Силовая на низ", start_at=workout1_start_at),
-        Workout(name="Силовая на верх", start_at=workout2_start_at),
-        Workout(name="Фитнес-дискотека", start_at=workout3_start_at),
-        Workout(start_at=workout4_start_at),
+        Workout(
+            title="Силовая на низ",
+            start_at=workout1_start_at,
+            site_workout_id=1,
+            user=user,
+        ),
+        Workout(
+            title="Силовая на верх",
+            start_at=workout2_start_at,
+            site_workout_id=2,
+            user=user,
+        ),
+        Workout(
+            title="Фитнес-дискотека",
+            start_at=workout3_start_at,
+            site_workout_id=3,
+            user=user,
+        ),
+        Workout(start_at=workout4_start_at, site_workout_id=4, user=user),
     ]
 
     notifications = [
@@ -70,5 +88,11 @@ async def seed_test_data(session: AsyncSession):
     session.add_all(notifications)
 
 
+async def test_seed_database():
+    await prepare_test_database()
+    async with session_manager() as session:
+        await seed_test_data(session)
+
+
 if __name__ == "__main__":
-    asyncio.run(seed_test_data(1))
+    asyncio.run(test_seed_database())

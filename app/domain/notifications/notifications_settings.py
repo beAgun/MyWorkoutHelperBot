@@ -6,6 +6,7 @@ from .notifications_times_list import *
 
 @dataclass
 class NotificationsSettings:
+    action: NotificationsSettingsAction = None
     notification_type: NotificationType = None
     trainings_notification_type: TrainingsNotificationType = None
     notifications_times: NotificationsTimesList = field(

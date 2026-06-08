@@ -4,6 +4,7 @@ from app.bot.states import UserStates
 import app.bot.keyboards as kb
 from aiogram.fsm.context import FSMContext
 from app.bot.callbacks_types import TimeCB
+from app.domain.notifications.notification_time import NotificationsSettingsAction
 from app.application.actions.notifications_settings_form import (
     NotificationsSettingsForm,
 )
@@ -13,18 +14,44 @@ from app.bot.middlewares import (
     PrivateAuthMiddlewareCallbackQuery,
 )
 
-
 private_router = Router()
 private_router.message.middleware(PrivateAuthMiddlewareMessage())
 private_router.callback_query.middleware(PrivateAuthMiddlewareCallbackQuery())
 
 
-@private_router.callback_query(F.data == "notifications")
+@private_router.callback_query(F.data.startswith("notifications"))
 async def notifications(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
+    action = callback.data
+    form = await NotificationsSettingsForm.update(state, action=action)
+    print(form.notifications_settings.action)
+    if action == NotificationsSettingsAction.unsubscribe.code:
+        await callback.message.edit_text(
+            "Вы действительно хотите отписаться от всех уведомлений?",
+            reply_markup=kb.claim_unsubscribe,
+        )
+        return
     await state.set_state(UserStates.NOTIFICATION_TYPE)
     await callback.message.edit_text(
         "Выберите тип уведомлений:", reply_markup=kb.notification_types
+    )
+
+
+@private_router.callback_query(F.data == "claim_unsubscribe")
+async def claim_unsubscribe(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    form: NotificationsSettingsForm = await NotificationsSettingsForm.load(state)
+    answer = await form.unsubscribe(chat_id=callback.from_user.id)
+    await callback.message.edit_text(answer)
+
+
+@private_router.callback_query(F.data == "edit_or_unsubscribe")
+async def claim_unsubscribe(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await state.clear()
+    await callback.message.edit_text(
+        f"Привет, {callback.from_user.first_name}! Я telegram бот для уведомлений! Выбери действие:",
+        reply_markup=kb.edit_or_unsubscribe,
     )
 
 

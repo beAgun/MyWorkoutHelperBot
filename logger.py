@@ -50,6 +50,11 @@ dictConfig(
                 "handlers": handlers_keys,
                 "propagate": False,
             },
+            "celery": {
+                "level": settings.LOG_LEVEL,
+                "handlers": handlers_keys,
+                "propagate": False,
+            },
             # "sqlalchemy": {
             #     "level": settings.LOG_LEVEL,
             #     "handlers": handlers_keys,

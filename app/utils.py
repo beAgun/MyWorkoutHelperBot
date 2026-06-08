@@ -3,7 +3,6 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from app.db.models import *
 from app.db.database import session_manager
 from app.db.models_repo import *
-from email_validator import validate_email, EmailNotValidError
 from fastapi.responses import HTMLResponse
 
 

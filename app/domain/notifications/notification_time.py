@@ -13,6 +13,12 @@ class LabeledEnum(Enum):
         return next(item for item in cls if item.code == code)
 
 
+class NotificationsSettingsAction(LabeledEnum):
+    subscribe = "notifications.subscribe", "Подписаться на уведомления"
+    edit = "notifications.edit", "Настроить уведомления"
+    unsubscribe = "notifications.unsubscribe", "Отписаться от уведомлений"
+
+
 class NotificationType(LabeledEnum):
     # weighting = "weighting", "взвешивание"
     trainings = "trainings", "тренировки"
@@ -20,7 +26,7 @@ class NotificationType(LabeledEnum):
 
 class TrainingsNotificationType(LabeledEnum):
     all = "all", "все тренировки"
-    only_enabled = "only_enabled", "только с включёнными уведомлениями"
+    # only_enabled = "only_enabled", "только с включёнными уведомлениями"
     # certain = "certain", "определённая тренировка"
 
 

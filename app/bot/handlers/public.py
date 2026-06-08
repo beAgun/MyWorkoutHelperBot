@@ -9,8 +9,7 @@ from config import settings
 from app.application.user.email_service import request_email_link
 from app.application.security.rate_limit import check_attempts
 from app.application.user.linking_service import handle_linking
-from app.application.user.repository import is_linked
-
+from app.application.user.repository import is_linked, user_has_notifications_enabled
 
 public_router = Router()
 public_router.message.middleware(PublicAuthMiddleware())
@@ -26,9 +25,10 @@ async def cmd_start(message: Message, state: FSMContext, command: CommandObject)
     if token:
         text = await handle_linking(message, token)
         text += " Выбери действие:"
-        kbd = kb.main
+        kbd = kb.subscribe
     else:
-        if not await is_linked(message.chat.id):
+        site_user_id = await is_linked(message.chat.id)
+        if site_user_id is None:
             text = (
                 "Я telegram бот для уведомлений! "
                 "Чтобы продолжить, привяжи аккаунт на сайте MyWorkoutTracker."
@@ -36,7 +36,10 @@ async def cmd_start(message: Message, state: FSMContext, command: CommandObject)
             kbd = kb.link
         else:
             text = "Я telegram бот для уведомлений! Выбери действие:"
-            kbd = kb.main
+            if await user_has_notifications_enabled(site_user_id):
+                kbd = kb.edit_or_unsubscribe
+            else:
+                kbd = kb.subscribe
 
     await message.answer(
         f"Привет, {message.from_user.first_name}! {text}",
@@ -92,7 +95,6 @@ async def cmd_description(message: Message, state: FSMContext):
             "дневнике тренировок на сайте MyWorkoutTracker. Также можно настроить "
             "уведомления о периодическом взвешивании."
         ),
-        reply_markup=kb.main,
     )
 
 

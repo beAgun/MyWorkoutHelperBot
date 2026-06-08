@@ -23,13 +23,48 @@ visit_site = InlineKeyboardMarkup(
 )
 
 
-main = InlineKeyboardMarkup(
+subscribe = InlineKeyboardMarkup(
     inline_keyboard=[
         [
             InlineKeyboardButton(
-                text="Подписаться на уведомления", callback_data="notifications"
+                text=NotificationsSettingsAction.subscribe.label,
+                callback_data=NotificationsSettingsAction.subscribe.code,
             )
         ]
+    ]
+)
+
+
+edit_or_unsubscribe = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text=NotificationsSettingsAction.edit.label,
+                callback_data=NotificationsSettingsAction.edit.code,
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=NotificationsSettingsAction.unsubscribe.label,
+                callback_data=NotificationsSettingsAction.unsubscribe.code,
+            )
+        ],
+    ]
+)
+
+
+claim_unsubscribe = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="Подтвердить удаление", callback_data="claim_unsubscribe"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Вернуться назад", callback_data="edit_or_unsubscribe"
+            )
+        ],
     ]
 )
 

@@ -5,9 +5,14 @@ from app.db.database import *
 from app.bot.callbacks_types import TimeCB
 from app.bot.states import *
 import inspect
-
+from logger import logger
 from app.domain.notifications.notifications_settings import *
 from app.application.actions.actions import *
+from app.tasks.notifications import (
+    create_user_notifications_task,
+    delete_user_notifications_task,
+    edit_user_notifications_task,
+)
 
 
 class NotificationsSettingsForm:
@@ -59,27 +64,26 @@ class NotificationsSettingsForm:
         return msg
 
     async def confirm(self, chat_id: int) -> str:
-        await self.state.clear()
+        await self.state.clear()  # here?
         settings = self.notifications_settings
         chosen_times = settings.validate()
 
-        async with session_manager() as session:
-            user = await UserRepo.get_user_by_chat_id(session=session, chat_id=chat_id)
-
-            print(chat_id, user)
-
-            for item in chosen_times:
-                rule = NotificationsRule(
-                    user=user,
-                    only_enabled=(
-                        settings.trainings_notification_type
-                        == TrainingsNotificationType.only_enabled
-                    ),
-                    offset_minutes=item.value_in_minutes,
-                )
-                session.add(rule)
-            await session.commit()
-            # create_notifications_task()
+        if settings.action == NotificationsSettingsAction.subscribe.code:
+            create_user_notifications_task.delay(
+                [item.value_in_minutes for item in chosen_times], chat_id
+            )
+        elif settings.action == NotificationsSettingsAction.edit.code:
+            edit_user_notifications_task.delay(
+                [item.value_in_minutes for item in chosen_times], chat_id
+            )
 
         msg = f"Вы выбрали: {', '.join([item.label for item in chosen_times])}"
+        return msg
+
+    async def unsubscribe(self, chat_id: int) -> str:
+        await self.state.clear()
+
+        delete_user_notifications_task.delay(chat_id)
+
+        msg = "Вы отписались от уведомлений"
         return msg

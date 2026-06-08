@@ -1,5 +1,4 @@
-from config import settings
-from aiohttp import ClientSession
+from app.infra.site_client import SiteClient
 from email_validator import validate_email, EmailNotValidError
 
 
@@ -11,21 +10,20 @@ def validate_user_email(email: str) -> str | None:
 
 
 async def get_email_link(email: str, chat_id: int) -> str:
-    data = {"email": email, "chat_id": chat_id}
+    client = SiteClient()
+    try:
+        response = await client.send_email_link(email, chat_id)
+    finally:
+        await client.close()
 
-    async with ClientSession() as session:
-        response = await session.post(
-            url=f"{settings.WORKOUT_SITE_URL}/notifications/email-tg-link/", json=data
-        )
+    if response.status == 200:
+        return "Проверьте почту и перейдите по ссылке для завершения привязки аккаунтов"
 
-        if response.status == 200:
-            return "Проверьте почту и перейдите по ссылке для завершения привязки аккаунтов"
+    elif response.status == 404:
+        return "Пользователь с указанной почтой не найден. Проверьте корректность и попробуйте снова"
 
-        elif response.status == 404:
-            return "Пользователь с указанной почтой не найден. Проверьте корректность и попробуйте снова"
-
-        else:
-            return "Произошла ошибка"
+    else:
+        return "Произошла ошибка"
 
 
 async def request_email_link(email: str, chat_id: int) -> str:

@@ -1,5 +1,4 @@
 from sqlalchemy import select, and_, update
-from sqlalchemy.orm import query
 from .models import *
 from datetime import datetime
 from tests.utils import async_timed

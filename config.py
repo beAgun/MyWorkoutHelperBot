@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     WORKOUT_SITE_URL: str  # TODO: should be url type?
     WORKOUT_SITE_LINK: str
     TG_LINK_TOKEN: str
+    SITE_TG_API_KEY: str
 
     MODE: Literal["DEV", "TEST", "PROD"]
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
@@ -61,6 +62,9 @@ class Settings(BaseSettings):
     TEST_DB_PASS: str
     TEST_DB_NAME: str
     TEST_DATABASE_URL: str
+
+    REDIS_HOST: str
+    REDIS_PORT: int
 
     LOCAL_TZ: tzinfo = ZoneInfo("Europe/Moscow")
 
