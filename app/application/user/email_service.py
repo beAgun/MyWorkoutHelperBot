@@ -10,11 +10,8 @@ def validate_user_email(email: str) -> str | None:
 
 
 async def get_email_link(email: str, chat_id: int) -> str:
-    client = SiteClient()
-    try:
-        response = await client.send_email_link(email, chat_id)
-    finally:
-        await client.close()
+    async with SiteClient() as site_session:
+        response = await site_session.send_email_link(email, chat_id)
 
     if response.status == 200:
         return "Проверьте почту и перейдите по ссылке для завершения привязки аккаунтов"
