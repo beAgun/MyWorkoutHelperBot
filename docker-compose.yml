@@ -1,5 +1,18 @@
 services:
 
+  notification_migrate:
+    build: .
+    command: alembic upgrade head
+    volumes:
+      - ./:/app
+    depends_on:
+      - notification_postgres
+    env_file:
+      - .env
+    networks:
+      - backend
+    restart: "no"
+
   notification_service:
     build: .
     command: python main.py
