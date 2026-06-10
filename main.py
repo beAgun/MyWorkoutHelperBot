@@ -25,9 +25,9 @@ async def lifespan(app: FastAPI):
         async with session_manager() as session:
             await seed_test_data(session)
 
-    session = AiohttpSession(proxy="socks5://127.0.0.1:1080")
-
-    bot = Bot(token=settings.BOT_TOKEN, session=session)
+    # session = AiohttpSession(proxy="socks5://127.0.0.1:1080")
+    # bot = Bot(token=settings.BOT_TOKEN, session=session)
+    bot = Bot(token=settings.BOT_TOKEN)
     dp = Dispatcher()
     dp.include_router(public_router)
     dp.include_router(private_router)
@@ -36,9 +36,9 @@ async def lifespan(app: FastAPI):
     app.state.dp = dp
 
     async with scheduler_manager(bot):
-        # await bot.set_webhook(settings.WEBHOOK_URL)
+        await bot.set_webhook(settings.WEBHOOK_URL)
         yield
-        # await bot.delete_webhook()
+        await bot.delete_webhook()
         await bot.session.close()
 
 
@@ -70,4 +70,4 @@ app.include_router(router)
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="localhost", port=8002, reload=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=8002, reload=False)

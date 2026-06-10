@@ -1,0 +1,60 @@
+services:
+
+  notification_service:
+    build: .
+    command: python main.py
+    volumes:
+      - ./:/app
+    ports:
+      - "8002:8002"
+    depends_on:
+      - notification_postgres
+    env_file:
+      - .env
+    networks: 
+      - backend
+
+  notification_consumer:
+    build: .
+    command: python run_consumer.py
+    volumes:
+      - ./:/app
+    depends_on:
+      - notification_postgres
+    env_file:
+      - .env
+    networks: 
+      - backend
+
+  notification_celery:
+    build: ./
+    command: celery -A app.tasks.celery_app worker -l info --pool=solo
+    volumes:
+      - ./:/app
+    depends_on:
+      - notification_postgres
+    env_file:
+      - .env
+    networks: 
+      - backend
+
+  notification_postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${DB_NAME} 
+      POSTGRES_USER: ${DB_USER} 
+      POSTGRES_PASSWORD: ${DB_PASS}
+    volumes:
+      - notification_postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    networks: 
+      - backend
+
+volumes:
+  notification_postgres_data:
+
+networks: 
+  backend:
+    external: true
+    name: backend_network
