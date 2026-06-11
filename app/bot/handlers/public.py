@@ -10,6 +10,7 @@ from app.application.user.email_service import request_email_link
 from app.application.security.rate_limit import check_attempts
 from app.application.user.linking_service import handle_linking
 from app.application.user.repository import is_linked, user_has_notifications_enabled
+from sqlalchemy.exc import IntegrityError
 
 public_router = Router()
 public_router.message.middleware(PublicAuthMiddleware())
@@ -23,9 +24,17 @@ async def cmd_start(message: Message, state: FSMContext, command: CommandObject)
     token = command.args
 
     if token:
-        text = await handle_linking(message, token)
-        text += " Выбери действие:"
-        kbd = kb.subscribe
+        try:
+            text = await handle_linking(message, token)
+            text += " Выбери действие:"
+            kbd = kb.subscribe
+        except ValueError as err:
+            text = str(err)
+            kbd = None
+        except IntegrityError as err:
+            text = str(err)
+            text += " Перепривязать аккаунт?"
+            kbd = kb.link
     else:
         site_user_id = await is_linked(message.chat.id)
         if site_user_id is None:
