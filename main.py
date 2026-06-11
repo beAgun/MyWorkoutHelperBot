@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Response, APIRouter
+from fastapi import FastAPI, Request, Response, APIRouter, Form
 from contextlib import asynccontextmanager
 import uvicorn
 from aiogram import Bot, Dispatcher
@@ -67,7 +67,7 @@ async def resolve_link_token(token: str):
 
 
 @router.post("/confirm-relink")
-async def confirm_relink_router(token: str):
+async def confirm_relink_router(token: str = Form(...)):
     return await confirm_relink(token)
 
 

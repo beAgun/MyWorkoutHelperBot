@@ -118,10 +118,12 @@ async def delete_user_notifications(chat_id: int):
     retry_backoff=True,
 )
 def create_user_notifications_task(chosen_times: list[int], chat_id: int):
+    loop = asyncio.new_event_loop()
     try:
-        asyncio.run(create_user_notifications(chosen_times, chat_id))
-    except Exception as e:
-        logger.exception(e)
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(create_user_notifications(chosen_times, chat_id))
+    finally:
+        loop.close()
 
 
 @celery_app.task(
@@ -130,10 +132,12 @@ def create_user_notifications_task(chosen_times: list[int], chat_id: int):
     retry_backoff=True,
 )
 def edit_user_notifications_task(chosen_times: list[int], chat_id: int):
+    loop = asyncio.new_event_loop()
     try:
-        asyncio.run(edit_user_notifications(chosen_times, chat_id))
-    except Exception as e:
-        logger.exception(e)
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(edit_user_notifications(chosen_times, chat_id))
+    finally:
+        loop.close()
 
 
 @celery_app.task(
@@ -142,7 +146,9 @@ def edit_user_notifications_task(chosen_times: list[int], chat_id: int):
     retry_backoff=True,
 )
 def delete_user_notifications_task(chat_id: int):
+    loop = asyncio.new_event_loop()
     try:
-        asyncio.run(delete_user_notifications(chat_id))
-    except Exception as e:
-        logger.exception(e)
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(delete_user_notifications(chat_id))
+    finally:
+        loop.close()

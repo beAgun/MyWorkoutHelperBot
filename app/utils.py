@@ -51,7 +51,7 @@ async def resolve_token(token: str):
                     уже привязан к другому Telegram аккаунту
                 </h1>
 
-                <form action="/confirm-relink" method="post">
+                <form action="/telegram/confirm-relink" method="post">
                     <input
                         type="hidden"
                         name="token"
