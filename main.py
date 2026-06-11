@@ -8,7 +8,7 @@ from app.bot.handlers.private import private_router
 from aiogram.types import Update
 from config import settings
 from logger import logger
-from app.utils import resolve_token
+from app.utils import resolve_token, confirm_relink
 from tests.database import prepare_test_database, seed_test_data
 import sys
 from app.db.database import session_manager
@@ -64,6 +64,11 @@ async def webhook(request: Request):
 @router.get("/resolve-link-token/")
 async def resolve_link_token(token: str):
     return await resolve_token(token)
+
+
+@router.post("/confirm-relink")
+async def confirm_relink_router(token: str):
+    return await confirm_relink(token)
 
 
 app.include_router(router)
