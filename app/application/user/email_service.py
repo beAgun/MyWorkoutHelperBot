@@ -1,5 +1,6 @@
 from app.infra.site_client import SiteClient
 from email_validator import validate_email, EmailNotValidError
+from logger import logger
 
 
 def validate_user_email(email: str) -> str | None:
@@ -13,14 +14,22 @@ async def get_email_link(email: str, chat_id: int) -> str:
     async with SiteClient() as site_session:
         response = await site_session.send_email_link(email, chat_id)
 
-    if response.status == 200:
-        return "Проверьте почту и перейдите по ссылке для завершения привязки аккаунтов"
+        if response.status == 200:
+            return "Проверьте почту и перейдите по ссылке для завершения привязки аккаунтов"
 
-    elif response.status == 404:
-        return "Пользователь с указанной почтой не найден. Проверьте корректность и попробуйте снова"
+        elif response.status == 404:
+            return "Пользователь с указанной почтой не найден. Проверьте корректность и попробуйте снова"
 
-    else:
-        return "Произошла ошибка"
+        else:
+            try:
+                data = await response.json()
+            except Exception:
+                data = await response.text()
+
+            logger.error(
+                f"Email link error: status={response.status}, url={response.url}, body={data}"
+            )
+            return "Произошла ошибка"
 
 
 async def request_email_link(email: str, chat_id: int) -> str:

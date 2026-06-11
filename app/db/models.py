@@ -30,7 +30,9 @@ class User(Base):
 
     last_name: Mapped[str | None] = mapped_column(String(length=64), default=None)
 
-    site_user_id: Mapped[int | None] = mapped_column(Integer, default=None)
+    site_user_id: Mapped[int | None] = mapped_column(
+        Integer, unique=True, nullable=True, default=None
+    )
 
     notifications_enabled: Mapped[bool | None] = mapped_column(Boolean, default=False)
 
