@@ -28,11 +28,11 @@ async def send_msg_workout_changed_by_trainer(
         user = await UserRepo.get_user_by_site_id(session, site_user_id)
         text = "Проверьте свой дневник тренировок и спортивных событий! Ваш тренер"
         if event_type.split(".")[1] == "created":
-            text = "создал событие"
+            text += "создал событие"
         elif event_type.split(".")[1] == "deleted":
-            text = "удалил событие"
+            text += "удалил событие"
         elif event_type.split(".")[1] == "updated":
-            text = "изменил событие"
+            text += "изменил событие"
         text += f": {title}\nТип: {workout_type}\nВремя: {workout_datetime}"
         msg = Message(chat_id=user.chat_id, text=text)
         await sender.send_one(msg)
