@@ -14,14 +14,14 @@ scheduler = AsyncIOScheduler(executors=executors, job_defaults=job_defaults)
 
 
 @asynccontextmanager
-async def scheduler_manager(bot):
+async def scheduler_manager(app):
     try:
         scheduler.add_job(
             send_trainings_notifications,
             trigger=IntervalTrigger(seconds=30),
             id="send_trainings_notifications_job",
             replace_existing=True,
-            args=[bot],
+            args=[app.state.sender],
         )
         if not scheduler.running:
             scheduler.start()
