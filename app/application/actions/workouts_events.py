@@ -18,24 +18,19 @@ sender = TelegramSender(bot)
 
 
 async def send_msg_workout_changed_by_trainer(
-    event_type: str,
-    site_user_id: int,
+    chat_id: int,
+    text: str,
     title: str,
     workout_type: str,
-    workout_datetime,
+    workout_datetime: datetime,
 ):
-    async with session_manager() as session:
-        user = await UserRepo.get_user_by_site_id(session, site_user_id)
-        text = "Проверьте свой дневник тренировок и спортивных событий! Ваш тренер"
-        if event_type.split(".")[1] == "created":
-            text += "создал событие"
-        elif event_type.split(".")[1] == "deleted":
-            text += "удалил событие"
-        elif event_type.split(".")[1] == "updated":
-            text += "изменил событие"
-        text += f": {title}\nТип: {workout_type}\nВремя: {workout_datetime}"
-        msg = Message(chat_id=user.chat_id, text=text)
-        await sender.send_one(msg)
+    local_dt = workout_datetime.astimezone(settings.LOCAL_TZ)
+    date_str = local_dt.strftime("%d.%m.%Y")
+    time_str = local_dt.strftime("%H:%M")
+    text = "Проверьте свой дневник тренировок и спортивных событий!\n" + text
+    text += f"{title}\nТип: {workout_type}\nДата: {date_str}\nВремя: {time_str}"
+    msg = Message(chat_id=chat_id, text=text)
+    await sender.send_one(msg)
 
 
 def build_notifications(
@@ -64,6 +59,7 @@ async def handle_workout_created(
     title: str,
     workout_type: str,
     workout_datetime: datetime,
+    by_trainer: bool = False,
 ):
 
     async with session_manager() as session:
@@ -89,6 +85,15 @@ async def handle_workout_created(
         session.add(workout)
         session.add_all(notifications)
 
+        if by_trainer:
+            await send_msg_workout_changed_by_trainer(
+                chat_id=user.chat_id,
+                text="Ваш тренер создал событие: ",
+                title=title,
+                workout_type=workout_type,
+                workout_datetime=workout_datetime,
+            )
+
 
 async def handle_workout_updated(
     event_id: int,
@@ -97,6 +102,7 @@ async def handle_workout_updated(
     title: str,
     workout_type: str,
     workout_datetime: datetime,
+    by_trainer: bool = False,
 ):
 
     async with session_manager() as session:
@@ -138,12 +144,31 @@ async def handle_workout_updated(
 
         session.add_all(notifications)
 
+        if by_trainer:
+            await send_msg_workout_changed_by_trainer(
+                chat_id=user.chat_id,
+                text="Ваш тренер изменил событие: ",
+                title=title,
+                workout_type=workout_type,
+                workout_datetime=workout_datetime,
+            )
 
-async def handle_workout_deleted(event_id: int, site_workout_id: int):
+
+async def handle_workout_deleted(
+    event_id: int,
+    site_user_id: int,
+    site_workout_id: int,
+    title: str,
+    workout_type: str,
+    workout_datetime: datetime,
+    by_trainer: bool = False,
+):
 
     async with session_manager() as session:
         if await ProcessedEventRepo.is_processed_event(session, event_id):
             return
+
+        user = await UserRepo.get_user_by_site_id(session, site_user_id)
 
         workout = await WorkoutRepo.get_by_site_workout_id(session, site_workout_id)
         if workout is None:
@@ -153,3 +178,12 @@ async def handle_workout_deleted(event_id: int, site_workout_id: int):
             return
         await NotificationRepo.delete_by_workout_id(session, workout_id=workout.id)
         await WorkoutRepo.delete_by_id(session, model_id=workout.id)
+
+        if by_trainer:
+            await send_msg_workout_changed_by_trainer(
+                chat_id=user.chat_id,
+                text="Ваш тренер удалил событие: ",
+                title=title,
+                workout_type=workout_type,
+                workout_datetime=workout_datetime,
+            )

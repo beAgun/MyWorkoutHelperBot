@@ -23,6 +23,7 @@ async def process_event(event_id: int, event_type: str, data: dict):
         return
 
     workout_datetime = datetime.fromisoformat(data["datetime"])
+    by_trainer = event_type.split(".")[-1] == "by_trainer"
 
     if event_type.startswith("workout.created"):
 
@@ -33,6 +34,7 @@ async def process_event(event_id: int, event_type: str, data: dict):
             data["title"],
             data["workout_type"],
             workout_datetime,
+            by_trainer,
         )
 
     elif event_type.startswith("workout.updated"):
@@ -44,19 +46,19 @@ async def process_event(event_id: int, event_type: str, data: dict):
             data["title"],
             data["workout_type"],
             workout_datetime,
+            by_trainer,
         )
 
     elif event_type.startswith("workout.deleted"):
 
-        await handle_workout_deleted(event_id, data["workout_id"])
-
-    if event_type.split(".")[-1] == "by_trainer":
-        await send_msg_workout_changed_by_trainer(
-            event_type,
+        await handle_workout_deleted(
+            event_id,
             site_user_id,
+            data["workout_id"],
             data["title"],
             data["workout_type"],
             workout_datetime,
+            by_trainer,
         )
 
 
