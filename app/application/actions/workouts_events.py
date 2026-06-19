@@ -10,10 +10,15 @@ from app.db.models import Notification, Workout, User, NotificationsRule, Proces
 from datetime import datetime, timedelta, timezone
 from logger import logger
 from app.infra.telegram_sender import Message, TelegramSender
+from dotenv import dotenv_values
+from aiogram import Bot
+
+env_vars = dotenv_values("/.env")
+bot = Bot(env_vars["BOT_TOKEN"])
+sender = TelegramSender(bot)
 
 
 async def send_msg_workout_changed_by_trainer(
-    sender: TelegramSender,
     event_type: str,
     site_user_id: int,
     title: str,

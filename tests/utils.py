@@ -13,7 +13,7 @@ def async_timed():
                 return await async_func(*args, **kwargs)
             finally:
                 t1 = time.perf_counter()
-                logger.info(f"{(t1 - t0):.3f}s - {async_func.__name__}")
+                # logger.info(f"{(t1 - t0):.3f}s - {async_func.__name__}")
 
         return wrapped
 

@@ -68,6 +68,11 @@ dictConfig(
     }
 )
 
+
+logging.getLogger("apscheduler").setLevel(logging.WARNING)
+logging.getLogger("aiogram.event").setLevel(logging.WARNING)
+
+
 if __name__ == "__main__":
     for name in logging.root.manager.loggerDict:
         print(name)

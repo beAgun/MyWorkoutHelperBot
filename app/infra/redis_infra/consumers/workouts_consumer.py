@@ -52,9 +52,7 @@ async def process_event(event_id: int, event_type: str, data: dict):
         await handle_workout_deleted(event_id, data["workout_id"])
 
     if event_type.split(".")[-1] == "by_trainer":
-        sender = app.state.sender
         await send_msg_workout_changed_by_trainer(
-            sender,
             event_type,
             site_user_id,
             data["title"],
