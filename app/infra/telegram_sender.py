@@ -1,10 +1,10 @@
 from collections import namedtuple
 import asyncio
 
-    
-Message = namedtuple('Message', ['chat_id', 'text'])
+Message = namedtuple("Message", ["chat_id", "text"])
 
-class TelegramSender():
+
+class TelegramSender:
 
     def __init__(self, bot):
         self.bot = bot

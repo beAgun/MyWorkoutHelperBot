@@ -7,7 +7,6 @@ from app.scheduler.jobs import send_trainings_notifications
 from apscheduler.triggers.interval import IntervalTrigger
 from logger import logger
 
-
 # jobstores = {'redis': RedisJobStore()}
 job_defaults = {"coalesce": True, "max_instances": 1}
 executors = {"async_executor": AsyncIOExecutor()}
@@ -24,7 +23,8 @@ async def scheduler_manager(bot):
             replace_existing=True,
             args=[bot],
         )
-        scheduler.start()
+        if not scheduler.running:
+            scheduler.start()
         yield scheduler
     finally:
         if scheduler.running:

@@ -7,7 +7,9 @@ from app.application.actions.workouts_events import (
     handle_workout_created,
     handle_workout_updated,
     handle_workout_deleted,
+    send_msg_workout_changed_by_trainer,
 )
+from main import app
 from logger import logger
 
 STREAM = "workouts_stream"
@@ -23,7 +25,7 @@ async def process_event(event_id: int, event_type: str, data: dict):
 
     workout_datetime = datetime.fromisoformat(data["datetime"])
 
-    if event_type == "workout.created":
+    if event_type.startswith("workout.created"):
 
         await handle_workout_created(
             event_id,
@@ -34,7 +36,7 @@ async def process_event(event_id: int, event_type: str, data: dict):
             workout_datetime,
         )
 
-    elif event_type == "workout.updated":
+    elif event_type.startswith("workout.updated"):
 
         await handle_workout_updated(
             event_id,
@@ -45,9 +47,20 @@ async def process_event(event_id: int, event_type: str, data: dict):
             workout_datetime,
         )
 
-    elif event_type == "workout.deleted":
+    elif event_type.startswith("workout.deleted"):
 
         await handle_workout_deleted(event_id, data["workout_id"])
+
+    if event_type.split(".")[-1] == "by_trainer":
+        sender = app.state.sender
+        await send_msg_workout_changed_by_trainer(
+            sender,
+            event_type,
+            site_user_id,
+            data["title"],
+            data["workout_type"],
+            workout_datetime,
+        )
 
 
 async def process_messages(messages):

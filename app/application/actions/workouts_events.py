@@ -9,6 +9,29 @@ from app.db.database import session_manager, AsyncSession
 from app.db.models import Notification, Workout, User, NotificationsRule, ProcessedEvent
 from datetime import datetime, timedelta, timezone
 from logger import logger
+from app.infra.telegram_sender import Message, TelegramSender
+
+
+async def send_msg_workout_changed_by_trainer(
+    sender: TelegramSender,
+    event_type: str,
+    site_user_id: int,
+    title: str,
+    workout_type: str,
+    workout_datetime,
+):
+    async with session_manager() as session:
+        user = await UserRepo.get_user_by_site_id(session, site_user_id)
+        text = "Проверьте свой дневник тренировок и спортивных событий! Ваш тренер"
+        if event_type.split(".")[1] == "created":
+            text = "создал событие"
+        elif event_type.split(".")[1] == "deleted":
+            text = "удалил событие"
+        elif event_type.split(".")[1] == "updated":
+            text = "изменил событие"
+        text += f": {title}\nТип: {workout_type}\nВремя: {workout_datetime}"
+        msg = Message(chat_id=user.chat_id, text=text)
+        await sender.send_one(msg)
 
 
 def build_notifications(

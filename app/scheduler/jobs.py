@@ -14,10 +14,9 @@ def format_date(date: datetime):
 
 
 @async_timed()
-async def send_trainings_notifications(bot):
+async def send_trainings_notifications(sender: TelegramSender):
     async with session_manager() as session:
         repo = Repo(session)
-        sender = TelegramSender(bot)
 
         now = datetime.now(tz=timezone.utc)
         data = await repo.get_pending_and_mark_sent_with_workout_data(date=now)

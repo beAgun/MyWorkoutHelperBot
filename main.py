@@ -15,6 +15,7 @@ from app.db.database import session_manager
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiohttp_socks import ProxyConnector
 from app.scheduler.scheduler import scheduler_manager
+from app.infra.telegram_sender import TelegramSender
 
 
 @asynccontextmanager
@@ -31,11 +32,13 @@ async def lifespan(app: FastAPI):
     dp = Dispatcher()
     dp.include_router(public_router)
     dp.include_router(private_router)
+    sender = TelegramSender(bot)
 
     app.state.bot = bot
     app.state.dp = dp
+    app.state.sender = sender
 
-    async with scheduler_manager(bot):
+    async with scheduler_manager(app):
         await bot.set_webhook(settings.WEBHOOK_URL)
         yield
         await bot.delete_webhook()
