@@ -12,7 +12,11 @@ if settings.MODE == "TEST":
     DATABASE_PARAMS = {"poolclass": NullPool, "echo": False}
 else:
     DATABASE_URL = settings.DATABASE_URL
-    DATABASE_PARAMS = {"echo": False}
+    DATABASE_PARAMS = {
+        "echo": False,
+        "poolclass": NullPool,
+        "pool_pre_ping": True,
+    }
 
 # DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 # psycopg2 - sync engine

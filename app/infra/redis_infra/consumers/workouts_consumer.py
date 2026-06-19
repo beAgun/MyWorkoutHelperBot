@@ -9,7 +9,6 @@ from app.application.actions.workouts_events import (
     handle_workout_deleted,
     send_msg_workout_changed_by_trainer,
 )
-from main import app
 from logger import logger
 
 STREAM = "workouts_stream"
