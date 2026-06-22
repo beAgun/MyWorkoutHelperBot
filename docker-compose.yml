@@ -26,6 +26,7 @@ services:
       - .env
     networks: 
       - backend
+    restart: always
 
   notification_consumer:
     build: .
@@ -38,6 +39,7 @@ services:
       - .env
     networks: 
       - backend
+    restart: always
 
   notification_celery:
     build: ./
@@ -50,6 +52,7 @@ services:
       - .env
     networks: 
       - backend
+    restart: always
 
   notification_postgres:
     image: postgres:15
@@ -63,6 +66,7 @@ services:
       - .env
     networks: 
       - backend
+    restart: always
 
   flower:
     build: ./
@@ -75,6 +79,7 @@ services:
       - .env
     networks:
       - backend
+    restart: always
 
 volumes:
   notification_postgres_data:

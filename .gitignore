@@ -24,3 +24,4 @@ dist/
 set_webhook.py
 draft
 draft.txt
+*.log
