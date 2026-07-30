@@ -1,4 +1,12 @@
-from .models import Base, User, NotificationsRule, Notification, Workout, ProcessedEvent
+from .models import (
+    Base,
+    User,
+    NotificationsRule,
+    Notification,
+    Workout,
+    ProcessedEvent,
+    CompetitionMonitorState,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, update, exists, distinct
 from sqlalchemy.dialects.postgresql import insert
@@ -86,6 +94,14 @@ class UserRepo(ModelRepo):
         ).returning(cls.model.id)
         res = await session.execute(query)
         return res.scalars().one_or_none()
+
+    @classmethod
+    async def get_competitions_notifications_subscribed_users(
+        cls, session: AsyncSession
+    ) -> list[_T]:
+        query = select(cls.model).where(cls.model.competitions_notifications.is_(True))
+        res = await session.execute(query)
+        return res.scalars().all()
 
 
 class NotificationsRuleRepo(ModelRepo):
@@ -270,10 +286,51 @@ class ProcessedEventRepo(ModelRepo):
 
     @classmethod
     async def is_processed_event(cls, session: AsyncSession, event_id: int) -> bool:
-        stmt = insert(ProcessedEvent).values(id=event_id).on_conflict_do_nothing()
+        stmt = insert(cls.model).values(id=event_id).on_conflict_do_nothing()
 
         res = await session.execute(stmt)
 
         if res.rowcount == 0:
             return True
         return False
+
+
+class CompetitionMonitorStateRepo(ModelRepo):
+    model = CompetitionMonitorState
+
+    @classmethod
+    async def get_event_state(
+        cls,
+        session: AsyncSession,
+        event_code: str,
+    ) -> _T | None:
+        stmt = select(cls.model).where(cls.model.event_code == event_code)
+
+        res = await session.execute(stmt)
+        return res.scalars().one_or_none()
+
+    @classmethod
+    async def upsert_event_state(
+        cls,
+        session: AsyncSession,
+        event_code: str,
+        registration_date: datetime,
+        checked_at: datetime,
+    ) -> _T | None:
+        stmt = (
+            insert(cls.model)
+            .values(
+                event_code=event_code,
+                registration_date=registration_date,
+                checked_at=checked_at,
+            )
+            .on_conflict_do_update(
+                index_elements=[cls.model.event_code],
+                set_={
+                    "registration_date": registration_date,
+                    "checked_at": checked_at,
+                },
+            )
+        )
+
+        res = await session.execute(stmt)

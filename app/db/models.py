@@ -10,6 +10,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
     Index,
+    func,
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import datetime, timezone
@@ -47,6 +48,8 @@ class User(Base):
     workouts: Mapped[list["Workout"]] = relationship(
         "Workout", back_populates="user", init=False
     )
+
+    competitions_notifications: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class NotificationsRule(Base):
@@ -153,4 +156,21 @@ class ProcessedEvent(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.now(timezone.utc), nullable=False
+    )
+
+
+class CompetitionMonitorState(Base):
+    __tablename__ = "competitions_monitor_state"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    event_code: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    event_name: Mapped[str] = mapped_column(String, nullable=False)
+    registration_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    checked_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
