@@ -38,7 +38,7 @@ async def scheduler_manager(app):
             check_kgbrun_registration_open,
             id="check_kgbrun_registration_open_job",
             replace_existing=True,
-            minutes=5,
+            trigger=IntervalTrigger(seconds=5 * 60),
             max_instances=1,
             next_run_time=datetime.now(),
             args=[client.session, app.state.sender],

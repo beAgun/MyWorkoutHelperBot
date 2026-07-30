@@ -314,6 +314,7 @@ class CompetitionMonitorStateRepo(ModelRepo):
         cls,
         session: AsyncSession,
         event_code: str,
+        event_name: str,
         registration_date: datetime,
         checked_at: datetime,
     ) -> _T | None:
@@ -321,6 +322,7 @@ class CompetitionMonitorStateRepo(ModelRepo):
             insert(cls.model)
             .values(
                 event_code=event_code,
+                event_name=event_name,
                 registration_date=registration_date,
                 checked_at=checked_at,
             )

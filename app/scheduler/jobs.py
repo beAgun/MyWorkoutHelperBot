@@ -66,6 +66,7 @@ async def check_kgbrun_registration_open(
             event_row = await CompetitionMonitorStateRepo.get_event_state(
                 session, event_code=event.get("code")
             )
+            print(event_row.registration_date, event.get("date"))
             if event_row is None or event_row.registration_date != event.get("date"):
                 users = await UserRepo.get_competitions_notifications_subscribed_users(
                     session
