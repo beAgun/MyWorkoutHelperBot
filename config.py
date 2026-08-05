@@ -36,7 +36,14 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
     BOT_TOKEN: str
+    TEST_BOT_TOKEN: str
+
     WEBHOOK_URL: str
+    TEST_WEBHOOK_URL: str
+
+    API_PREFIX: str
+    TEST_API_PREFIX: str
+
     WEBHOOK_PATH: str
     WORKOUT_SITE_URL: str  # TODO: should be url type?
     WORKOUT_SITE_LINK: str
@@ -65,6 +72,8 @@ class Settings(BaseSettings):
 
     REDIS_HOST: str
     REDIS_PORT: int
+
+    ADMIN_IDS: list[int]
 
     LOCAL_TZ: tzinfo = ZoneInfo("Europe/Moscow")
 

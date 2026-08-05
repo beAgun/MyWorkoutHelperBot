@@ -299,6 +299,16 @@ class CompetitionMonitorStateRepo(ModelRepo):
     model = CompetitionMonitorState
 
     @classmethod
+    async def get_all(
+        cls,
+        session: AsyncSession,
+    ) -> list[_T]:
+        stmt = select(cls.model)
+
+        res = await session.execute(stmt)
+        return res.scalars().all()
+
+    @classmethod
     async def get_event_state(
         cls,
         session: AsyncSession,

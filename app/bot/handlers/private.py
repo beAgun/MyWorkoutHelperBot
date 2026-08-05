@@ -12,10 +12,14 @@ from config import settings
 from app.bot.middlewares import (
     PrivateAuthMiddlewareMessage,
     PrivateAuthMiddlewareCallbackQuery,
+    ErrorMiddleware,
 )
+from app.scheduler.scheduler import scheduler
 
 private_router = Router()
+private_router.message.middleware(ErrorMiddleware())
 private_router.message.middleware(PrivateAuthMiddlewareMessage())
+private_router.callback_query.middleware(ErrorMiddleware())
 private_router.callback_query.middleware(PrivateAuthMiddlewareCallbackQuery())
 
 
@@ -126,3 +130,35 @@ async def get_custom_time_value(message: Message, state: FSMContext):
         )
     except ValueError as err:
         await message.answer(text=str(err), show_alert=True)
+
+
+def is_admin(chat_id: int):
+    return chat_id in settings.ADMIN_IDS
+
+
+@private_router.callback_query(F.data == "sport_event_pause_job")
+async def get_notifications_times(callback: CallbackQuery):
+    chat_id = callback.message.chat.id
+    if is_admin(chat_id):
+        job = scheduler.get_job("check_kgbrun_registration_open_job")
+        if job.next_run_time is not None:
+            scheduler.pause_job("check_kgbrun_registration_open_job")
+            await callback.message.edit_text("Мониторинг остановлен")
+        else:
+            await callback.message.edit_text("Мониторинг уже остановлен")
+    else:
+        await callback.message.edit_text("У вас нет прав администратора")
+
+
+@private_router.callback_query(F.data == "sport_event_resume_job")
+async def get_notifications_times(callback: CallbackQuery):
+    chat_id = callback.message.chat.id
+    if is_admin(chat_id):
+        job = scheduler.get_job("check_kgbrun_registration_open_job")
+        if job.next_run_time is not None:
+            await callback.message.edit_text("Мониторинг уже запущен")
+        else:
+            scheduler.resume_job("check_kgbrun_registration_open_job")
+            await callback.message.edit_text("Мониторинг запущен")
+    else:
+        await callback.message.edit_text("У вас нет прав администратора")

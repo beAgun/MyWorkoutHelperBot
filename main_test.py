@@ -1,35 +1,79 @@
-import asyncio
+from fastapi import FastAPI, Request, Response, APIRouter, Form
+from contextlib import asynccontextmanager
+import uvicorn
 from aiogram import Bot, Dispatcher
 from config import settings
-from app.bot.handlers import router
-from app.bot.handlers import router
+from app.bot.handlers.public import public_router
+from app.bot.handlers.private import private_router
+from aiogram.types import Update
 from config import settings
-from app.scheduler.scheduler import scheduler_manager
-import sys
-import warnings
+from logger import logger
+from app.utils import resolve_token, confirm_relink
 from tests.database import prepare_test_database, seed_test_data
+import sys
 from app.db.database import session_manager
+from aiogram.client.session.aiohttp import AiohttpSession
+from app.scheduler.scheduler import scheduler_manager
+from app.infra.telegram_sender import TelegramSender
 
 
-async def main():
-
-    if settings.MODE == "TEST" and "--seed" in sys.argv:
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if settings.MODE == "TEST":
         await prepare_test_database()
+    if "--seed" in sys.argv:
         async with session_manager() as session:
             await seed_test_data(session)
 
-    bot = Bot(token=settings.BOT_TOKEN)
+    session = AiohttpSession(proxy="socks5://127.0.0.1:1080")
+    bot = Bot(token=settings.TEST_BOT_TOKEN, session=session)
     dp = Dispatcher()
-    dp.include_router(router)
-    async with scheduler_manager(bot):
-        await dp.start_polling(bot)
+    dp.include_router(public_router)
+    dp.include_router(private_router)
+    sender = TelegramSender(bot)
+
+    app.state.bot = bot
+    app.state.dp = dp
+    app.state.sender = sender
+
+    async with scheduler_manager(app):
+        await bot.set_webhook(settings.TEST_WEBHOOK_URL)
+        yield
+        await bot.delete_webhook()
+        await bot.session.close()
+
+
+app = FastAPI(lifespan=lifespan)
+router = APIRouter(prefix=settings.TEST_API_PREFIX)
+
+
+@router.post(settings.WEBHOOK_PATH)
+async def webhook(request: Request):
+    try:
+        bot = request.app.state.bot
+        dp = request.app.state.dp
+
+        update = Update.model_validate(await request.json())
+        await dp.feed_update(bot, update)
+
+        return Response(status_code=200)
+    except Exception as e:
+        logger.exception(e)
+        return Response(status_code=200)
+
+
+@router.get("/resolve-link-token/")
+async def resolve_link_token(token: str):
+    return await resolve_token(token)
+
+
+@router.post("/confirm-relink")
+async def confirm_relink_router(token: str = Form(...)):
+    return await confirm_relink(token)
+
+
+app.include_router(router)
 
 
 if __name__ == "__main__":
-    warnings.filterwarnings(
-        "ignore", category=RuntimeWarning, message="Event loop is closed"
-    )
-    try:
-        asyncio.run(main())
-    except (KeyboardInterrupt, RuntimeError) as e:
-        sys.exit()
+    uvicorn.run("main_test:app", host="0.0.0.0", port=8002, reload=False)

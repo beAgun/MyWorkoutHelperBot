@@ -58,7 +58,6 @@ async def check_kgbrun_registration_open(
         }
         for race in races
     ]
-    print(registrationOpenDates)
 
     now = datetime.now(tz=timezone.utc)
     async with session_manager() as session:
@@ -66,7 +65,6 @@ async def check_kgbrun_registration_open(
             event_row = await CompetitionMonitorStateRepo.get_event_state(
                 session, event_code=event.get("code")
             )
-            print(event_row.registration_date, event.get("date"))
             if event_row is None or event_row.registration_date != event.get("date"):
                 users = await UserRepo.get_competitions_notifications_subscribed_users(
                     session
@@ -74,13 +72,14 @@ async def check_kgbrun_registration_open(
                 if event_row is None:
                     text = f'Регистрация на мероприятие {event.get("name")} откроется в {event.get("date").strftime("%H:%M %d.%m.%Y")}.'
                 else:
-                    text = f' Время регистрации на мероприятие {event.get("name")} изменилось: {event.get("date").strftime("%H:%M %d.%m.%Y")}.'
+                    text = f'Время регистрации на мероприятие {event.get("name")} изменилось: {event.get("date").strftime("%H:%M %d.%m.%Y")}.'
                 await sender.send_batch(
                     [Message(chat_id=user.chat_id, text=text) for user in users]
                 )
             await CompetitionMonitorStateRepo.upsert_event_state(
                 session,
                 event_code=event.get("code"),
+                event_name=event.get("name"),
                 registration_date=event.get("date"),
                 checked_at=now,
             )

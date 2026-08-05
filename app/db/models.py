@@ -23,7 +23,7 @@ class User(Base):
 
     chat_id: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False)
 
-    first_name: Mapped[str | None] = mapped_column(String(length=64), nullable=False)
+    first_name: Mapped[str] = mapped_column(String(length=64), nullable=False)
 
     username: Mapped[str] = mapped_column(
         String(length=64), unique=True, nullable=True, default=None

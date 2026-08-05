@@ -1,19 +1,24 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart, Command, CommandObject
+from aiogram.enums import ParseMode
 from app.bot.states import LinkUserStates
 import app.bot.keyboards as kb
 from aiogram.fsm.context import FSMContext
-from app.bot.middlewares import PublicAuthMiddleware
+from app.bot.middlewares import PublicAuthMiddleware, ErrorMiddleware
 from config import settings
 from app.application.user.email_service import request_email_link
 from app.application.security.rate_limit import check_attempts
 from app.application.user.linking_service import handle_linking
 from app.application.user.repository import is_linked, user_has_notifications_enabled
+from app.application.actions.sport_events import get_sport_event_log
 from sqlalchemy.exc import IntegrityError
+from html import escape
 
 public_router = Router()
+public_router.message.middleware(ErrorMiddleware())
 public_router.message.middleware(PublicAuthMiddleware())
+public_router.callback_query.middleware(ErrorMiddleware())
 public_router.callback_query.middleware(PublicAuthMiddleware())
 
 
@@ -78,7 +83,7 @@ async def start_linking(message: Message, state: FSMContext):
         )
 
 
-@public_router.message(LinkUserStates.EMAIL)
+@public_router.message(LinkUserStates.EMAIL, ~F.text.startswith("/"))
 async def email_handler(message: Message, state: FSMContext):
     if not await check_attempts(state, "EMAIL_ATTEMPTS"):
         await state.clear()
@@ -108,5 +113,53 @@ async def cmd_description(message: Message, state: FSMContext):
 
 
 @public_router.message(Command("visit_site"))
-async def cmd_visit_site(message: Message):
+async def cmd_visit_site(message: Message, state: FSMContext):
+    await state.clear()
     await message.answer(f"Добро пожаловать!", reply_markup=kb.visit_site)
+
+
+@public_router.message(Command("sport_events"))
+async def cmd_sport_events(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer(f"Выберите действие:", reply_markup=kb.sport_events)
+
+
+@public_router.callback_query(F.data == "sport_event_log")
+async def sport_event_log(callback: CallbackQuery):
+    events = await get_sport_event_log()
+
+    if not events:
+        await callback.message.edit_text(text="Нет данных")
+        return
+
+    lines = [
+        "+------------+--------------+------------+",
+        "│ {:<10} │ {:<12} │ {:<10} │".format("Дистанция", "Регистрация", "Проверено"),
+        "+------------+--------------+------------+",
+    ]
+
+    for event in events:
+        event_name = escape(event.event_name)
+        registration_date = escape(
+            event.registration_date.astimezone(tz=settings.LOCAL_TZ).strftime(
+                "%H:%M\n%d.%m.%Y"
+            )
+        ).split("\n")
+        checked_at = escape(
+            event.checked_at.astimezone(tz=settings.LOCAL_TZ).strftime(
+                "%H:%M\n%d.%m.%Y"
+            )
+        ).split("\n")
+
+        lines.append(
+            "\n".join(
+                [
+                    f"│ {event_name:<10} │ {registration_date[0]:<12} │ {checked_at[0]:<10} │",
+                    f"│ {'':<10} │ {registration_date[1]:<12} │ {checked_at[1]:<10} │",
+                    f"+------------+--------------+------------+",
+                ]
+            )
+        )
+
+    text = "<pre>\n" + "\n".join(lines) + "\n</pre>"
+    await callback.message.edit_text(text=text, parse_mode=ParseMode.HTML)

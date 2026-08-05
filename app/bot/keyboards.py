@@ -7,7 +7,7 @@ from config import settings
 from app.domain.notifications.notifications_settings import *
 from app.application.actions.actions import Actions
 
-BASE_CMDS = ["start", "link", "visit_site", "description"]
+# BASE_CMDS = ["start", "link", "visit_site", "description"]
 
 
 link = InlineKeyboardMarkup(
@@ -142,3 +142,33 @@ def get_time_kb(notifications_times: NotificationsTimesList):
     )
 
     return kb.as_markup()
+
+
+sport_events = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="Посмотреть журнал записей",
+                callback_data="sport_event_log",
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Запустить мониторинг",
+                callback_data="sport_event_resume_job",
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Приостановить мониторинг",
+                callback_data="sport_event_pause_job",
+            )
+        ],
+        # [
+        #     InlineKeyboardButton(
+        #         text="Обновить журнал записей",
+        #         callback_data="sport_event_update_log",
+        #     )
+        # ],
+    ]
+)

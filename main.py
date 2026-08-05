@@ -9,25 +9,13 @@ from aiogram.types import Update
 from config import settings
 from logger import logger
 from app.utils import resolve_token, confirm_relink
-from tests.database import prepare_test_database, seed_test_data
-import sys
-from app.db.database import session_manager
-from aiogram.client.session.aiohttp import AiohttpSession
-from aiohttp_socks import ProxyConnector
 from app.scheduler.scheduler import scheduler_manager
 from app.infra.telegram_sender import TelegramSender
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if settings.MODE == "TEST":
-        await prepare_test_database()
-    if "--seed" in sys.argv:
-        async with session_manager() as session:
-            await seed_test_data(session)
 
-    # session = AiohttpSession(proxy="socks5://127.0.0.1:1080")
-    # bot = Bot(token=settings.BOT_TOKEN, session=session)
     bot = Bot(token=settings.BOT_TOKEN)
     dp = Dispatcher()
     dp.include_router(public_router)
@@ -46,7 +34,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-router = APIRouter(prefix="/telegram")
+router = APIRouter(prefix=settings.API_PREFIX)
 
 
 @router.post(settings.WEBHOOK_PATH)
