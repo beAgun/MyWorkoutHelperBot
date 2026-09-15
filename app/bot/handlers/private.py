@@ -1,20 +1,23 @@
-from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
-from app.bot.states import UserStates
-import app.bot.keyboards as kb
+from aiogram import F, Router
+from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from app.bot.callbacks_types import TimeCB
-from app.domain.notifications.notification_time import NotificationsSettingsAction
+from aiogram.types import CallbackQuery, Message
+
+import app.bot.keyboards as kb
+from app.application.actions.med_schedule import get_med_schedule_status
 from app.application.actions.notifications_settings_form import (
     NotificationsSettingsForm,
 )
-from config import settings
+from app.bot.callbacks_types import TimeCB
 from app.bot.middlewares import (
-    PrivateAuthMiddlewareMessage,
-    PrivateAuthMiddlewareCallbackQuery,
     ErrorMiddleware,
+    PrivateAuthMiddlewareCallbackQuery,
+    PrivateAuthMiddlewareMessage,
 )
+from app.bot.states import UserStates
+from app.domain.notifications.notification_time import NotificationsSettingsAction
 from app.scheduler.scheduler import scheduler
+from config import settings
 
 private_router = Router()
 private_router.message.middleware(ErrorMiddleware())
@@ -162,3 +165,9 @@ async def get_notifications_times(callback: CallbackQuery):
             await callback.message.edit_text("Мониторинг запущен")
     else:
         await callback.message.edit_text("У вас нет прав администратора")
+
+
+@private_router.message(Command("get_med_status"))
+async def get_med_status(message: Message):
+    res = await get_med_schedule_status()
+    await message.answer(res)

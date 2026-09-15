@@ -1,14 +1,18 @@
-from ..db.database import session_manager
-from datetime import datetime, timezone
 import asyncio
-from config import settings
-from app.infra.telegram_sender import TelegramSender, Message
-from app.db.repo import Repo
-from app.db.models_repo import CompetitionMonitorStateRepo, UserRepo
-from tests.utils import async_timed
+import json
+from datetime import datetime, timezone
+
 from aiohttp.client import ClientSession, ClientTimeout
+
+from app.db.models_repo import CompetitionMonitorStateRepo, UserRepo
+from app.db.repo import Repo
 from app.infra.http_client import HttpClient
-from datetime import datetime
+from app.infra.redis_infra.redis_client import redis_client
+from app.infra.telegram_sender import Message, TelegramSender
+from config import settings
+from tests.utils import async_timed
+
+from ..db.database import session_manager
 
 local_tz = settings.LOCAL_TZ
 
@@ -70,11 +74,13 @@ async def check_kgbrun_registration_open(
                     session
                 )
                 if event_row is None:
-                    text = f'Регистрация на мероприятие {event.get("name")} откроется в {event.get("date").strftime("%H:%M %d.%m.%Y")}.'
+                    text = f"Регистрация на мероприятие {event.get('name')} откроется в {event.get('date').strftime('%H:%M %d.%m.%Y')}."
                 else:
-                    text = f'Время регистрации на мероприятие {event.get("name")} изменилось: {event.get("date").strftime("%H:%M %d.%m.%Y")}.'
+                    text = f"Время регистрации на мероприятие {event.get('name')} изменилось: {event.get('date').strftime('%H:%M %d.%m.%Y')}."
                 await sender.send_batch(
-                    [Message(chat_id=user.chat_id, text=text) for user in users]
+                    [
+                        Message(chat_id=user.chat_id, text=text) for user in users
+                    ]  # exception and no continuation
                 )
             await CompetitionMonitorStateRepo.upsert_event_state(
                 session,
@@ -105,10 +111,48 @@ async def create_http_client():
     return client
 
 
+async def check_med_schedule(
+    http_session: ClientSession, sender: TelegramSender = None
+):
+    doctors = await http_session.get(
+        "/_api/api/v2/schedule/lpu/1136/speciality/78/doctors"
+    )
+    doctors.raise_for_status()
+    data = await doctors.json()
+    doctors = data.get("result")
+    for d in doctors:
+        if d["name"].startswith("Котов"):
+            id = d["id"]
+            appointments = await http_session.get(
+                f"/_api/api/v2/schedule/lpu/1136/doctor/{id}/appointments"
+            )
+            appointments.raise_for_status()
+            data = await appointments.json()
+            data = json.dumps(data, indent=4, ensure_ascii=False)
+            msg = f"Появились свободные талоны:\n{data}.\nid врача {d['name']}: {id}.\n"
+            msg += f"{http_session._base_url}_api/api/v2/schedule/lpu/1136/doctor/{id}/appointments"
+            await redis_client.set(name="med_status", value=msg)
+            await sender.send_batch(
+                [Message(chat_id=admin_id, text=msg) for admin_id in settings.ADMIN_IDS]
+            )
+            break
+    else:
+        status = "Нет свободных талонов"
+        await redis_client.set(name="med_status", value=status)
+
+
 async def main():
-    client = await create_http_client()
-    await check_kgbrun_registration_open(http_session=client.session)
-    await client.close()
+    # client = await create_http_client()
+    # await check_kgbrun_registration_open(http_session=client.session)
+    # await client.close()
+
+    med_client = HttpClient(base_url="https://gorzdrav.spb.ru/")
+    med_session = await med_client.get_session()
+    try:
+        await check_med_schedule(http_session=med_session)
+    except Exception as e:
+        print(e)
+    await med_client.close()
 
 
 if __name__ == "__main__":
